@@ -3,7 +3,7 @@
 arm="false"
 os=""
 
-if [[ $(uname -m) == 'arm64' ]]; then
+if [ "$(uname -m)" == 'arm64' ]; then
     arm="true"
 fi
 
