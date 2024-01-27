@@ -1,6 +1,6 @@
 <div align="center">
 
-# GitHub Yoinker
+# Minecraft Server Installer
 ![GitHub Actions Workflow Status](https://img.shields.io/github/actions/workflow/status/Loudbooks/Minecraft-Server-Installer/rust.yml?style=for-the-badge)
 
 A program to download the latest and greatest of your favorite Minecraft server distrobution, written entirely in Rust.
