@@ -14,10 +14,14 @@ A program to download the latest and greatest of your favorite Minecraft server 
 # Windows
 - Double click the executable file.
 
-# Linux/MacOS
-- Run `chmod +x ./installer`
-- Run `./installer`
+# MacOS
+- Run `chmod +x ./installer-osx`
+- Run `./installer-osx`
 
+# Linux
+- Run `chmod +x ./installer-linux`
+- Run `./installer-linux`
+  
 # Final Notes
 - If you run into any issues, please, report them at the [issues](https://github.com/Loudbooks/Minecraft-Server-Installer/issues) page.
 - Forge is missing from this installer due to the fact they do not provide a mirror for their server files.
