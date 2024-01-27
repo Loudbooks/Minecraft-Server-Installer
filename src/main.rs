@@ -172,7 +172,7 @@ async fn get_latest_fabric_version() -> Result<String, String> {
         .max()
         .ok_or("No stable game version found")?;
 
-    Ok(stable_game_version)
+    return Ok(stable_game_version)
 }
 
 async fn get_fabric_build() -> Result<String, String> {
@@ -238,7 +238,7 @@ async fn get_latest_build(paper_version: &str) -> Result<String, String> {
         .max()
         .ok_or("No builds found")?;
 
-    Ok(build.to_string())
+    return Ok(build.to_string())
 }
 
 async fn download_vanilla(client: &Client) -> Result<(), String> {
