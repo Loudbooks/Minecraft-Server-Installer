@@ -336,7 +336,6 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
 
 
 fn unzip(file: &File) {
-    println!("Unzipping {}...", file.metadata().unwrap().len());
     let decompressed = GzDecoder::new(file);
 
     let mut archive = Archive::new(decompressed);
