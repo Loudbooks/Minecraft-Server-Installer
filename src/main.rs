@@ -1,7 +1,7 @@
 use std::cmp::min;
 use std::env;
 use std::fs::File;
-use std::io::{Write};
+use std::io::Write;
 use std::path::Path;
 use flate2::read::GzDecoder;
 use futures_util::StreamExt;
@@ -12,10 +12,17 @@ use tar::Archive;
 #[tokio::main]
 async fn main() {
     let is_arm = env::consts::ARCH.contains("arch64");
+    let java_path = if cfg!(target_os = "macos") {
+        "./java/jdk-17.0.10+7-jre/Contents/home/bin/java"
+    } else if cfg!(target_os = "linux") {
+        "./java/jdk-17.0.10+7-jre/bin/java"
+    } else {
+        "./java/jdk-17.0.10+7-jre/bin/java.exe"
+    };
 
     let client = Client::new();
 
-    if download_java(is_arm).await.is_err() {
+    if download_java(is_arm, java_path).await.is_err() {
         println!("Failed to download Java.");
         return;
     }
@@ -36,7 +43,7 @@ async fn main() {
     println!("2. Paper - A Minecraft server with plugins.");
     println!("3. FabricMC - A Minecraft server with Fabric mods.");
     println!(" ");
-    println!("Enter the number of the server you want to run: (1-4) ");
+    println!("Enter the number of the server you want to run: (1-3) ");
 
     let mut server_type = String::new();
     std::io::stdin().read_line(&mut server_type).unwrap();
@@ -63,9 +70,9 @@ async fn main() {
 
     if yes_or_no() {
         if cfg!(target_os = "windows") {
-            create_launch_bat().await;
+            create_launch_bat(java_path).await;
         } else {
-            create_launch_sh().await;
+            create_launch_sh(java_path).await;
         }
     }
 
@@ -89,25 +96,25 @@ fn yes_or_no() -> bool {
     return input == "y";
 }
 
-async fn create_launch_bat() {
+async fn create_launch_bat(java_path: &str) {
     println!("Creating launch script...");
 
     let file = File::create("./launch.bat").unwrap();
     let mut file = std::io::BufWriter::new(file);
 
-    file.write_all("java -Xmx1024M -Xms4G -jar server.jar nogui".as_bytes()).unwrap();
+    file.write_all(format!("\"{}\" -Xms1024M -Xmx4G -jar server.jar nogui\npause", java_path).as_bytes()).unwrap();
 
     println!("Launch script was created!");
     println!("To start your server, double click on launch.bat");
 }
 
-async fn create_launch_sh() {
+async fn create_launch_sh(java_path: &str) {
     println!("Creating launch script...");
 
     let file = File::create("./launch.sh").unwrap();
     let mut file = std::io::BufWriter::new(file);
 
-    file.write_all("java -Xmx1024M -Xms4G -jar server.jar nogui".as_bytes()).unwrap();
+    file.write_all(format!("\"{}\" -Xms1024M -Xmx4G -jar server.jar nogui\npause", java_path).as_bytes()).unwrap();
 
     std::process::Command::new("chmod")
         .arg("+x")
@@ -130,6 +137,8 @@ async fn accept_eula() {
 async fn download_fabric(client: &Client) -> Result<(), String> {
     let fabric_version = get_latest_fabric_version().await.unwrap();
     let fabric_build = get_fabric_build().await.unwrap();
+
+    println!("Using game version {} with Fabric build {}.", fabric_version, fabric_build);
 
     let url = format!("https://meta.fabricmc.net/v2/versions/loader/{}/{}/1.0.0/server/jar", fabric_version, fabric_build);
 
@@ -184,6 +193,8 @@ async fn download_paper(client: &Client) -> Result<(), String> {
     let paper_version = get_latest_paper_version().await.unwrap();
     let latest_build = get_latest_build(&paper_version).await.unwrap();
 
+    println!("Using Paper version {} with build {}.", paper_version, latest_build);
+
     let url = format!("https://api.papermc.io/v2/projects/paper/versions/{}/builds/{}/downloads/{}", paper_version, latest_build,
         format!("paper-{}-{}.jar", paper_version, latest_build));
 
@@ -231,6 +242,8 @@ async fn get_latest_build(paper_version: &str) -> Result<String, String> {
 }
 
 async fn download_vanilla(client: &Client) -> Result<(), String> {
+    println!("Downloading Vanilla server...");
+
     let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     let manifest_body = reqwest::get(manifest_url).await.unwrap().text().await.unwrap();
     let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).unwrap();
@@ -254,25 +267,10 @@ async fn download_vanilla(client: &Client) -> Result<(), String> {
     return Ok(());
 }
 
-async fn download_java(is_arm: bool) -> Result<(), String> {
-    println!("Downloading Java...");
-
-    let path: &Path;
-    #[cfg(target_os = "windows")] {
-        path = Path::new("./java/bin/java/java.exe")
-    }
-
-    #[cfg(target_os = "macos")] {
-        path = Path::new("./java/jdk-17.0.10+7-jre/Contents/home/bin/java")
-    }
-
-    #[cfg(target_os = "linux")] {
-        path = Path::new("./java/bin/java")
-    }
-
-    if !path.exists() {
+async fn download_java(is_arm: bool, java_path: &str) -> Result<(), String> {
+    if !Path::new(java_path).exists() {
         let url: Option<&str>;
-        #[cfg(target_os = "windows")] { url = Some("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x86-32_windows_hotspot_17.0.10_7.zip") }
+        #[cfg(target_os = "windows")] { url = Some("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_windows_hotspot_17.0.10_7.zip") }
 
         if is_arm {
             #[cfg(target_os = "macos")] { url = Some("https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.10_7.tar.gz") }
@@ -288,19 +286,26 @@ async fn download_java(is_arm: bool) -> Result<(), String> {
         }
 
         let client = Client::new();
-        #[cfg(target_os = "windows")] { download_file(&client, &url.unwrap().to_string(), "./java.zip").await?; }
-        #[cfg(target_os = "macos")] { download_file(&client, &url.unwrap().to_string(), "./java.tar.gz").await?; }
-        #[cfg(target_os = "linux")] { download_file(&client, &url.unwrap().to_string(), "./java.tar.gz").await?; }
 
-        println!("Unzipping Java...");
-        #[cfg(target_os = "windows")] { unzip(&File::open("./java.zip").expect("Failed to unzip old Java file.")); }
-        #[cfg(target_os = "macos")] { unzip(&File::open("./java.tar.gz").expect("Failed to unzip old Java file.")); }
-        #[cfg(target_os = "linux")] { unzip(&File::open("./java.tar.gz").expect("Failed to unzip old Java file.")); }
+        if cfg!(target_os = "windows") {
+            println!("Downloading Java...");
+            download_file(&client, &url.unwrap().to_string(), "./java.zip").await.expect("Failed to download Java.");
 
-        println!("Cleaning up...");
-        #[cfg(target_os = "windows")] { std::fs::remove_file("./java.zip").expect("Failed to delete old Java file."); }
-        #[cfg(target_os = "macos")] { std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file."); }
-        #[cfg(target_os = "linux")] { std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file."); }
+            println!("Unzipping Java...");
+            unzip(&File::open("./java.zip").expect("Failed to unzip old Java file."));
+
+            println!("Deleting old Java file...");
+            std::fs::remove_file("./java.zip").expect("Failed to delete old Java file.");
+        } else {
+            println!("Downloading Java...");
+            download_file(&client, &url.unwrap().to_string(), "./java.tar.gz").await.expect("Failed to download Java.");
+
+            println!("Unzipping Java...");
+            unzip(&File::open("./java.tar.gz").expect("Failed to unzip old Java file."));
+
+            println!("Deleting old Java file...");
+            std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file.");
+        }
     }
 
     return Ok(());
@@ -336,8 +341,13 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
 
 
 fn unzip(file: &File) {
-    let decompressed = GzDecoder::new(file);
+    if cfg!(target_os = "windows") {
+        let mut archive = zip::ZipArchive::new(file).unwrap();
+        archive.extract("./java").unwrap();
+    } else {
+        let decompressed = GzDecoder::new(file);
 
-    let mut archive = Archive::new(decompressed);
-    archive.unpack("./java").unwrap();
+        let mut archive = Archive::new(decompressed);
+        archive.unpack("./java").unwrap();
+    }
 }
