@@ -11,14 +11,14 @@ A program to download the latest and greatest of your favorite Minecraft server 
 1. Head over to the [Releases](https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest), and download the file for your operating system.
 2. Take that file and put it wherever you like, make sure it's in a folder alone.
 
-# Windows
+## Windows  <img src="https://github.com/get-icon/geticon/blob/master/icons/microsoft-windows.svg" height=18>
 - Double click the executable file.
 
-# MacOS
+## MacOS  <img src="https://github.com/get-icon/geticon/blob/master/icons/apple.svg" height=24>
 - Run `chmod +x ./installer-osx`
 - Run `./installer-osx`
 
-# Linux
+## Linux  <img src="https://github.com/get-icon/geticon/blob/master/icons/linux-tux.svg" height=24>
 - Run `chmod +x ./installer-linux`
 - Run `./installer-linux`
   
