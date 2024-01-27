@@ -33,13 +33,13 @@ if test -f ./server.jar; then
     exit
 fi
 
-if ! test -f ./java/Contents/Home/bin/java; then 
+if ! test -f ./java/bin/java; then
     echo "Java does not exist. Downloading!"
     if [ "$arm" ]; then
         echo "Detected arm system."
     
         if [ "$os" == "macOS" ]; then
-            curl "https://download.java.net/java/GA/jdk17.0.2/dfd4a8d0985749f896bed50d7138ee7f/8/GPL/openjdk-17.0.2_macos-aarch64_bin.tar.gz" --output java.tar.gz
+            curl "https://download.oracle.com/java/17/latest/jdk-17_macOS-aarch64_bin.tar.gz" --output java.tar.gz
         elif [ "$os" == "linux" ]; then
             curl "https://download.oracle.com/java/17/latest/jdk-17_linux-aarch64_bin.tar.gz" --output java.tar.gz
         fi
@@ -57,7 +57,8 @@ if ! test -f ./java/Contents/Home/bin/java; then
 
     tar xvzf java.tar.gz
     rm java.tar.gz
-    mv jdk-17.0.2.jdk java
+    mv jdk-17.0.10 java
+
 else
     echo "Java is already downloaded."
 fi
@@ -87,7 +88,7 @@ if ! test -d ./libs; then
         if [ "$os" == "macOS" ]; then
             curl -L "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-arm64" --output-dir libs --output jq
         elif [ "$os" == "linux" ]; then
-            curl "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-arm64" --output java.tar.gz
+            curl -L "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-arm64" --output-dir libs --output jq
         fi
     else
         echo "Detected x64 system."
@@ -96,7 +97,6 @@ if ! test -d ./libs; then
             curl -L "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-macos-amd64" --output-dir libs --output jq
         elif [ "$os" == "linux" ]; then
             curl -L "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" --output-dir libs --output jq
-            curl "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64" --output java.tar.gz
         elif [ "$os" == "windows" ]; then
             curl -L "https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-windows-amd64.exe" --output-dir libs --output jq
         fi
