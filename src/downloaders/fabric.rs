@@ -6,7 +6,7 @@ use crate::downloaders::downloaderror::DownloadError;
 pub(crate) struct Fabric {}
 
 impl Downloader for Fabric {
-    async fn download(client: &Client) -> Result<(), DownloadError> {
+    async fn download(client: Client) -> Result<(), DownloadError> {
         let fabric_version = get_latest_fabric_version().await.unwrap();
         let fabric_build = get_fabric_build().await.unwrap();
 

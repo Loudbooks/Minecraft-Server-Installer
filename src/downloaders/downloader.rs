@@ -1,16 +1,16 @@
 use std::cmp::min;
 use std::fs::File;
+use std::future::Future;
 use std::io::Write;
-use async_trait::async_trait;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
 use crate::downloaders::downloaderror::DownloadError;
 
-#[async_trait]
 pub trait Downloader {
-    async fn download(client: &Client) -> Result<(), DownloadError>;
+    fn download(client: Client) -> impl Future<Output = Result<(), DownloadError>> + Send;
 }
+
 
 pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(), DownloadError> {
     let request = client.get(url).send().await?;

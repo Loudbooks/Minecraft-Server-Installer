@@ -1,4 +1,3 @@
-use std::error::Error;
 use reqwest::Client;
 use crate::downloaders::downloader::{download_file, Downloader};
 use crate::downloaders::downloaderror::DownloadError;
