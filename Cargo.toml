@@ -13,3 +13,4 @@ indicatif = "0.17.7"
 futures-util = "0.3.14"
 zip = "0.6"
 zip-extensions = "0.6"
+openssl = { version = "0.10", features = ["vendored"] }
