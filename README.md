@@ -6,21 +6,26 @@
 A program to download the latest and greatest of your favorite Minecraft server distribution, written entirely in Rust.
 </div>
 
+# Server Support
+- Vanilla
+- PaperMC
+- FabricMC
+
 
 # Download
 1. Head over to [Releases](https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest), and download the file for your operating system.
 2. Take that file and put it wherever you like, make sure it's in a folder alone.
 
-## Windows  <img src="https://github.com/get-icon/geticon/blob/master/icons/microsoft-windows.svg" height=18>
+## Windows
 - Double click the executable file.
 
-## MacOS  <img src="https://github.com/get-icon/geticon/blob/master/icons/apple.svg" height=24>
-- Run `chmod +x ./installer-osx`
-- Run `./installer-osx`
+## MacOS
+- Run `chmod +x ./installer-osx-x86_64` or `chmod +x ./installer-osx-aarch64`
+- Run `./installer-osx-x86_64` or `./installer-osx-aarch64`
 
-## Linux  <img src="https://github.com/get-icon/geticon/blob/master/icons/linux-tux.svg" height=24>
-- Run `chmod +x ./installer-linux`
-- Run `./installer-linux`
+## Linux
+- Run `chmod +x ./installer-linux-x86_64` or `chmod +x ./installer-linux-aarch64`
+- Run `./installer-linux-x86_64` or `chmod +x ./installer-linux-aarch64`
   
 # Final Notes
 - If you run into any issues, please, report them at the [issues](https://github.com/Loudbooks/Minecraft-Server-Installer/issues) page.
