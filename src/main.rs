@@ -37,12 +37,12 @@ async fn main() {
         }
     }
 
-    println!(" ");
+    println!();
     println!("What kind of server do you want to run?");
     println!("1. Vanilla - The original Minecraft server. No plugins or mods.");
     println!("2. Paper - A Minecraft server with plugins.");
     println!("3. FabricMC - A Minecraft server with Fabric mods.");
-    println!(" ");
+    println!();
     println!("Enter the number of the server you want to run: (1-3) ");
 
     let mut server_type = String::new();
@@ -65,7 +65,7 @@ async fn main() {
 
     accept_eula().await;
 
-    println!(" ");
+    println!();
     println!("Do you want to create a launch script? (RECOMMENDED FOR NEW USERS) (y/n)");
 
     if yes_or_no() {
@@ -76,10 +76,10 @@ async fn main() {
         }
     }
 
-    println!(" ");
+    println!();
     println!("Hava a nice day!");
     println!("Tool was created by Loudbook, contact me on Discord: @loudbook");
-    println!(" ");
+    println!();
 }
 
 fn yes_or_no() -> bool {
