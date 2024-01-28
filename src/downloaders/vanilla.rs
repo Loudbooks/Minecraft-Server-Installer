@@ -12,7 +12,17 @@ impl Downloader for Vanilla {
         let manifest_body = reqwest::get(manifest_url).await?.text().await?;
         let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).unwrap();
 
-        let version_url = manifest_json["versions"][1]["url"].as_str().ok_or("Invalid manifest format");
+        let version_number = manifest_json.get("latest")
+            .unwrap().get("release").unwrap().as_str();
+
+        println!("Using version {}", version_number.unwrap());
+
+        let version_url = manifest_json.get("versions")
+            .unwrap().as_array()
+            .unwrap().iter()
+            .find(|version| version["id"].as_str() == version_number)
+            .and_then(|version| version["url"].as_str());
+
         let version_body = reqwest::get(version_url.unwrap()).await?.text().await?;
         let server_url = serde_json::from_str::<serde_json::Value>(&version_body)
             .ok()
