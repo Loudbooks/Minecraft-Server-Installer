@@ -42,7 +42,8 @@ pub async fn download(client: &Client, is_arm: bool, java_path: &str) -> Result<
             println!("Deleting old Java file...");
             std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file.");
         }
+    } else {
+        println!("Java is ready.");
     }
-
     return Ok(());
 }
