@@ -14,7 +14,7 @@ pub trait Downloader {
 
 pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(), DownloadError> {
     let request = client.get(url).send().await?;
-    let total_size = request.content_length().unwrap();
+    let total_size = request.content_length().unwrap_or(0u64);
 
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(ProgressStyle::default_bar()
