@@ -8,13 +8,9 @@ use reqwest::Client;
 use std::env;
 use std::fs::File;
 use std::io::Write;
-use openssl::version::number;
 use tar::Archive;
 use crate::downloader::Downloader;
-use crate::downloaders::fabric::Fabric;
 use crate::downloaders::java::download_java;
-use crate::downloaders::paper::Paper;
-use crate::downloaders::vanilla::Vanilla;
 
 #[tokio::main]
 async fn main() {
