@@ -38,7 +38,7 @@ impl Downloader for Vanilla {
             .find(|version| version["id"].as_str().expect("Failed to get ID") == version_number)
             .and_then(|version| version["url"].as_str());
 
-        let version_body = reqwest::get(version_url.expect("Failed to get download body.")).await?.text().await?;
+        let version_body = reqwest::get(version_url.expect("Version not found!")).await?.text().await?;
         let server_url = serde_json::from_str::<serde_json::Value>(&version_body)
             .ok()
             .and_then(|json| {

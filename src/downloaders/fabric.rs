@@ -60,7 +60,7 @@ async fn get_latest_fabric_version(minecraft_version: &Option<String>) -> Result
                 }
             })
             .max()
-            .ok_or("No game version found")?;
+            .ok_or("Version not found!")?;
 
         Ok(stable_game_version.to_string())
     }

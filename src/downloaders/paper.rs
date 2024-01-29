@@ -38,7 +38,7 @@ async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<S
         let paper_version = versions
             .last()
             .and_then(|v| v.as_str())
-            .ok_or("Paper version not found!")?;
+            .ok_or("Version not found!")?;
 
         Ok(paper_version.to_string())
     } else {
@@ -54,7 +54,7 @@ async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<S
                 }
             })
             .max()
-            .ok_or("Paper version not found!")?;
+            .ok_or("Version not found!")?;
 
         Ok(paper_version.to_string())
     }
