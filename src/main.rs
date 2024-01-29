@@ -29,7 +29,7 @@ async fn main() {
 
     let config = config::ConfigFile {
         path: if os == "windows" {
-            env::var("APP_DATA").expect("Failed to retrieve APP_DATA variable.") + "\\MinecraftServerInstaller"
+            env::var("APPDATA").expect("Failed to retrieve APPDATA variable.") + "\\MinecraftServerInstaller"
         } else if os == "linux" {
             env::var("XDG_CONFIG_HOME").expect("Failed to retrieve XDG_CONFIG_HOME variable.") + "/MinecraftServerInstaller"
         } else {
