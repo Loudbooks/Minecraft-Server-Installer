@@ -1,16 +1,15 @@
-use std::cmp::min;
-use std::fs::File;
-use std::future::Future;
-use std::io::Write;
 use futures_util::StreamExt;
 use indicatif::{ProgressBar, ProgressStyle};
 use reqwest::Client;
-use crate::downloaders::downloaderror::DownloadError;
+use std::cmp::min;
+use std::fs::File;
+use std::io::Write;
+use crate::downloaderror::DownloadError;
 
+#[allow(async_fn_in_trait)]
 pub trait Downloader {
-    fn download(client: Client) -> impl Future<Output = Result<(), DownloadError>> + Send;
+    async fn download(client: Client) -> Result<(), DownloadError>;
 }
-
 
 pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(), DownloadError> {
     let request = client.get(url).send().await?;
@@ -18,7 +17,7 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
 
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(ProgressStyle::default_bar()
-        .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})").unwrap()
+        .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})").expect("Failed to set progress bar style.")
         .progress_chars("#>-"));
 
     let mut file = File::create(path)?;

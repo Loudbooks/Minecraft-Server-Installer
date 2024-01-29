@@ -1,43 +1,53 @@
+use std::error::Error;
 use reqwest::Client;
-use crate::downloaders::downloader::{download_file, Downloader};
-use crate::downloaders::downloaderror::DownloadError;
+use crate::downloader::{download_file, Downloader};
+use crate::downloaderror::DownloadError;
 
 pub(crate) struct Paper {}
 
 impl Downloader for Paper {
     async fn download(client: Client) -> Result<(), DownloadError> {
-        let paper_version = get_latest_paper_version().await.unwrap();
-        let latest_build = get_latest_build(&paper_version).await.unwrap();
+        let paper_version = get_latest_paper_version().await.expect("Failed to get latest paper version");
+        let latest_build = get_latest_build(&paper_version).await.expect("Failed to get latest paper build");
 
-        println!("Using Paper version {} with build {}.", paper_version, latest_build);
+        println!(
+            "Using Paper version {} with build {}.",
+            paper_version, latest_build
+        );
 
-        let url = format!("https://api.papermc.io/v2/projects/paper/versions/{}/builds/{}/downloads/{}", paper_version, latest_build,
-                          format!("paper-{}-{}.jar", paper_version, latest_build));
+        let url = format!(
+            "https://api.papermc.io/v2/projects/paper/versions/{}/builds/{}/downloads/{}",
+            paper_version,
+            latest_build,
+            format!("paper-{}-{}.jar", paper_version, latest_build)
+        );
 
-        download_file(
-            &client,
-            &url,
-            "./server.jar"
-        ).await?;
+        download_file(&client, &url, "./server.jar").await?;
 
         return Ok(());
     }
 }
 
-async fn get_latest_paper_version() -> Result<String, String> {
+async fn get_latest_paper_version() -> Result<String, Box<dyn Error>> {
     let url = "https://papermc.io/api/v2/projects/paper";
-    let response = reqwest::get(url).await.unwrap();
-    let json: serde_json::Value = response.json().await.unwrap();
+    let response = reqwest::get(url).await?;
+    let json: serde_json::Value = response.json().await?;
     let versions = json["versions"].as_array().ok_or("JSON is invalid!")?;
-    let paper_version = versions.last().and_then(|v| v.as_str()).ok_or("Paper version not found!")?;
+    let paper_version = versions
+        .last()
+        .and_then(|v| v.as_str())
+        .ok_or("Paper version not found!")?;
 
     return Ok(paper_version.to_string());
 }
 
-async fn get_latest_build(paper_version: &str) -> Result<String, String> {
-    let url = format!("https://api.papermc.io/v2/projects/paper/versions/{}/builds", paper_version);
-    let response = reqwest::get(&url).await.unwrap();
-    let json: serde_json::Value = response.json().await.unwrap();
+async fn get_latest_build(paper_version: &str) -> Result<String, Box<dyn Error>> {
+    let url = format!(
+        "https://api.papermc.io/v2/projects/paper/versions/{}/builds",
+        paper_version
+    );
+    let response = reqwest::get(&url).await?;
+    let json: serde_json::Value = response.json().await?;
 
     let build = json["builds"]
         .as_array()
@@ -55,5 +65,5 @@ async fn get_latest_build(paper_version: &str) -> Result<String, String> {
         .max()
         .ok_or("No builds found")?;
 
-    return Ok(build.to_string())
+    return Ok(build.to_string());
 }

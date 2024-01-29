@@ -14,3 +14,5 @@ futures-util = "0.3.14"
 zip = "0.6"
 zip-extensions = "0.6"
 openssl = { version = "0.10", features = ["vendored"] }
+toml = "0.8.8"
+serde = { version = "1.0.196", features = ["derive"] }
