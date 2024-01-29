@@ -95,7 +95,6 @@ async fn main() {
     println!();
     println!("What version of Minecraft do you want to run?");
     println!("Type latest for the latest version.");
-    println!();
 
     let mut minecraft_version = String::new();
     std::io::stdin().read_line(&mut minecraft_version).unwrap();

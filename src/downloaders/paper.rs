@@ -34,13 +34,13 @@ async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<S
     let json: serde_json::Value = response.json().await?;
     let versions = json["versions"].as_array().ok_or("JSON is invalid!")?;
 
-    if minecraft_version.is_none() {
+    return if minecraft_version.is_none() {
         let paper_version = versions
             .last()
             .and_then(|v| v.as_str())
             .ok_or("Paper version not found!")?;
 
-        return Ok(paper_version.to_string());
+        Ok(paper_version.to_string())
     } else {
         let minecraft_version = minecraft_version.unwrap();
         let paper_version = versions
@@ -56,7 +56,7 @@ async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<S
             .max()
             .ok_or("Paper version not found!")?;
 
-        return Ok(paper_version.to_string());
+        Ok(paper_version.to_string())
     }
 }
 
