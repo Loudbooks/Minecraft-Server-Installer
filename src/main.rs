@@ -45,7 +45,8 @@ async fn main() {
         config.create();
     }
 
-    let java_path = &config.clone().get_java_path(os.to_string()).expect("Failed to get Java path from config.");
+    let java_install_path = &config.clone().get_java_install_path().expect("Failed to get Java path from config.");
+    let java_path = java_install_path.to_string() + &config.clone().get_java_path(os.to_string()).expect("Failed to get Java path from config.");
 
     let java_key = if is_arm {
         os.to_string() + "_arm"
@@ -54,7 +55,7 @@ async fn main() {
     };
 
     let client = Client::new();
-    download_java(&client, java_path.as_str(), &config.get_java_download(java_key).unwrap().as_str())
+    download_java(&client, java_install_path.as_str(), java_path.as_str(), &config.get_java_download(java_key).unwrap().as_str())
         .await
         .expect("Failed to download Java.");
 
@@ -190,14 +191,14 @@ async fn accept_eula() {
     file.write_all("eula=true".as_bytes()).unwrap();
 }
 
-fn extract(file: &File) {
+fn extract(file: &File, path: &str) {
     if cfg!(target_os = "windows") {
         let mut archive = zip::ZipArchive::new(file).expect("Failed to create ZipArchive.");
-        archive.extract("./java").expect("Failed to extract Java file.");
+        archive.extract(path).expect("Failed to extract Java file.");
     } else {
         let decompressed = GzDecoder::new(file);
 
         let mut archive = Archive::new(decompressed);
-        archive.unpack("./java").expect("Failed to extract Java file.");
+        archive.unpack(path).expect("Failed to extract Java file.");
     }
 }

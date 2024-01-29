@@ -12,11 +12,12 @@ pub struct ConfigFile {
 #[derive(Deserialize, Serialize)]
 struct Config {
     java_paths: JavaPaths,
-    java_downloads: JavaDownloads
+    java_downloads: JavaDownloads,
 }
 
 #[derive(Deserialize, Serialize)]
 struct JavaPaths {
+    java_install_paths: String,
     osx: String,
     linux: String,
     windows: String,
@@ -40,9 +41,10 @@ impl ConfigFile {
 
         let default_config = Config {
             java_paths: JavaPaths {
-                osx: "./java/jdk-17.0.10+7-jre/Contents/home/bin/java".to_string(),
-                linux: "./java/jdk-17.0.10+7-jre/bin/java".to_string(),
-                windows: "./java/jdk-17.0.10+7-jre/bin/java.exe".to_string(),
+                java_install_paths: "./java".to_string(),
+                osx: "/jdk-17.0.10+7-jre/Contents/home/bin/java".to_string(),
+                linux: "/jdk-17.0.10+7-jre/bin/java".to_string(),
+                windows: "/jdk-17.0.10+7-jre/bin/java.exe".to_string(),
             },
             java_downloads: JavaDownloads {
                 osx: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_mac_hotspot_17.0.10_7.tar.gz".to_string(),
@@ -72,6 +74,14 @@ impl ConfigFile {
         let java_paths = config.get("java_paths").expect("Failed to get java_paths.");
 
         return Some(java_paths.get(key).expect("Failed to get java_path key.").as_str().expect("Failed to get java_path as string.").to_string());
+    }
+
+    pub fn get_java_install_path(self) -> Option<String> {
+        let config = self.get_config();
+
+        let java_install_paths = config.get("java_paths").expect("Failed to get java_install_paths.");
+
+        return Some(java_install_paths.get("java_install_paths").expect("Failed to get java_install_path key.").as_str().expect("Failed to get java_install_path as string.").to_string());
     }
 
     fn get_config(self) -> Value {
