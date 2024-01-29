@@ -5,20 +5,27 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Vanilla {}
 
 impl Downloader for Vanilla {
-    async fn download(client: Client) -> Result<(), DownloadError> {
+    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError> {
         println!("Downloading Vanilla server...");
 
         let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
         let manifest_body = reqwest::get(manifest_url).await?.text().await?;
         let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON.");
 
-        let version_number = manifest_json
-            .get("latest")
-            .expect("Failed to get latest release version.")
-            .get("release")
-            .expect("Failed to get latest release version.")
-            .as_str()
-            .expect("Failed to get latest release version as string.");
+        let version_number;
+
+        if minecraft_version.is_none() {
+             version_number = manifest_json
+                .get("latest")
+                .expect("Failed to get latest release version.")
+                .get("release")
+                .expect("Failed to get latest release version.")
+                .as_str()
+                .expect("Failed to get latest release version as string.")
+                .to_string();
+        } else {
+            version_number = minecraft_version.unwrap();
+        }
 
         println!("Using version {}", version_number);
 

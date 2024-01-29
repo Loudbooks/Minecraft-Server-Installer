@@ -6,8 +6,8 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Paper {}
 
 impl Downloader for Paper {
-    async fn download(client: Client) -> Result<(), DownloadError> {
-        let paper_version = get_latest_paper_version().await.expect("Failed to get latest paper version");
+    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError> {
+        let paper_version = get_latest_paper_version(minecraft_version).await.expect("Failed to get latest paper version");
         let latest_build = get_latest_build(&paper_version).await.expect("Failed to get latest paper build");
 
         println!(
@@ -28,17 +28,36 @@ impl Downloader for Paper {
     }
 }
 
-async fn get_latest_paper_version() -> Result<String, Box<dyn Error>> {
+async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<String, Box<dyn Error>> {
     let url = "https://papermc.io/api/v2/projects/paper";
     let response = reqwest::get(url).await?;
     let json: serde_json::Value = response.json().await?;
     let versions = json["versions"].as_array().ok_or("JSON is invalid!")?;
-    let paper_version = versions
-        .last()
-        .and_then(|v| v.as_str())
-        .ok_or("Paper version not found!")?;
 
-    return Ok(paper_version.to_string());
+    if minecraft_version.is_none() {
+        let paper_version = versions
+            .last()
+            .and_then(|v| v.as_str())
+            .ok_or("Paper version not found!")?;
+
+        return Ok(paper_version.to_string());
+    } else {
+        let minecraft_version = minecraft_version.unwrap();
+        let paper_version = versions
+            .iter()
+            .filter_map(|version| {
+                let version = version.as_str()?;
+                if version.starts_with(&minecraft_version) {
+                    Some(version)
+                } else {
+                    None
+                }
+            })
+            .max()
+            .ok_or("Paper version not found!")?;
+
+        return Ok(paper_version.to_string());
+    }
 }
 
 async fn get_latest_build(paper_version: &str) -> Result<String, Box<dyn Error>> {

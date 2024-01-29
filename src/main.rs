@@ -1,5 +1,5 @@
 pub mod downloaders;
-mod config;
+pub mod config;
 pub mod downloader;
 pub mod downloaderror;
 
@@ -92,16 +92,31 @@ async fn main() {
 
     let num = server_type.parse::<i32>().expect("Failed to parse server type.");
 
+    println!();
+    println!("What version of Minecraft do you want to run?");
+    println!("Type latest for the latest version.");
+    println!();
+
+    let mut minecraft_version = String::new();
+    std::io::stdin().read_line(&mut minecraft_version).unwrap();
+    minecraft_version = minecraft_version.trim().to_string();
+
+    let version_option = if minecraft_version == "latest" {
+        None
+    } else {
+        Some(minecraft_version.clone())
+    };
+
     if num == 1 {
-        downloaders::vanilla::Vanilla::download(client.clone())
+        downloaders::vanilla::Vanilla::download(client.clone(), version_option)
             .await
             .expect("Failed to download Vanilla.");
     } else if num == 2 {
-        downloaders::paper::Paper::download(client.clone())
+        downloaders::paper::Paper::download(client.clone(), version_option)
             .await
             .expect("Failed to download Paper.");
     } else if num == 3 {
-        downloaders::fabric::Fabric::download(client.clone())
+        downloaders::fabric::Fabric::download(client.clone(), version_option)
             .await
             .expect("Failed to download Fabric");
     }
