@@ -10,11 +10,14 @@ use std::fs::File;
 use std::io::Write;
 use tar::Archive;
 use crate::downloader::Downloader;
+use crate::downloaders::fabric::Fabric;
 use crate::downloaders::java::download_java;
+use crate::downloaders::paper::Paper;
+use crate::downloaders::vanilla::Vanilla;
 
 #[tokio::main]
 async fn main() {
-    let is_arm = env::consts::ARCH.contains("arch64");
+    let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");
 
     let os = if cfg!(target_os = "macos") {
         "osx"
@@ -37,16 +40,13 @@ async fn main() {
         }
     };
 
-    if !std::path::Path::new(&(config.path.to_string() + &"/msi-config.toml".to_string())).exists() {
+    if !std::path::Path::new(&(config.path.to_string() + "/msi-config.toml")).exists() {
         if !std::path::Path::new(&config.path).exists() {
             std::fs::create_dir(&config.path).expect("Failed to create config directory.");
         }
 
         config.create();
     }
-
-    let java_install_path = &config.clone().get_java_install_path().expect("Failed to get Java path from config.");
-    let java_path = java_install_path.to_string() + &config.clone().get_java_path(os.to_string()).expect("Failed to get Java path from config.");
 
     let java_key = if is_arm {
         os.to_string() + "_arm"
@@ -55,9 +55,6 @@ async fn main() {
     };
 
     let client = Client::new();
-    download_java(&client, java_install_path.as_str(), java_path.as_str(), &config.get_java_download(java_key).unwrap().as_str())
-        .await
-        .expect("Failed to download Java.");
 
     if File::open("./server.jar").is_ok() {
         println!("A server already exists. Do you want to delete it and download a new one? (y/n)");
@@ -106,16 +103,27 @@ async fn main() {
         Some(minecraft_version.clone())
     };
 
+    let java_version = config.get_java_version(minecraft_version.clone()).await.expect("Failed to get Java version.");
+    let java_install_path = &config.get_java_install_path().expect("Failed to get Java path from config.");
+
+    let java_path = java_install_path.to_string() + &config.get_java_path(os.to_string(), java_version).expect("Failed to get Java path from config.");
+
+    println!("Using Java {}", java_version);
+
+    download_java(&client, java_install_path.as_str(), java_path.as_str(), &config.get_java_download(java_key, java_version).unwrap().as_str())
+        .await
+        .expect("Failed to download Java.");
+
     if num == 1 {
-        downloaders::vanilla::Vanilla::download(client.clone(), version_option)
+        Vanilla::download(client.clone(), version_option)
             .await
             .expect("Failed to download Vanilla.");
     } else if num == 2 {
-        downloaders::paper::Paper::download(client.clone(), version_option)
+        Paper::download(client.clone(), version_option)
             .await
             .expect("Failed to download Paper.");
     } else if num == 3 {
-        downloaders::fabric::Fabric::download(client.clone(), version_option)
+        Fabric::download(client.clone(), version_option)
             .await
             .expect("Failed to download Fabric");
     }
