@@ -1,5 +1,5 @@
 use reqwest::Client;
-use crate::downloader::{download_file, Downloader};
+use crate::downloader::{download_file, Downloader, get_latest_vanilla_version};
 use crate::downloaderror::DownloadError;
 
 pub(crate) struct Vanilla {}
@@ -15,14 +15,7 @@ impl Downloader for Vanilla {
         let version_number;
 
         if minecraft_version.is_none() {
-             version_number = manifest_json
-                .get("latest")
-                .expect("Failed to get latest release version.")
-                .get("release")
-                .expect("Failed to get latest release version.")
-                .as_str()
-                .expect("Failed to get latest release version as string.")
-                .to_string();
+            version_number = get_latest_vanilla_version().await?;
         } else {
             version_number = minecraft_version.unwrap();
         }

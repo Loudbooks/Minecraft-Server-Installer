@@ -1,3 +1,5 @@
+extern crate core;
+
 pub mod downloaders;
 pub mod config;
 pub mod downloader;
@@ -48,6 +50,72 @@ async fn main() {
         config.create();
     }
 
+    let mut ready = false;
+
+    if os == "windows" {
+        if File::open("./launch.bat").is_ok() {
+            ready = true;
+        }
+    } else {
+        if File::open("./launch.sh").is_ok() {
+            ready = true;
+        }
+    }
+
+    if File::open("./server.jar").is_ok() {
+        ready = true;
+    }
+
+    if ready {
+        println!();
+        println!("A server is already set up. What do you want to do?");
+        println!("1. Change amount of RAM allocated to the server.");
+        println!("2. Replace your server file.");
+        println!("3. Exit.");
+        println!();
+        println!("Enter the number of the action you want to take: (1-4) ");
+
+        let mut selection = String::new();
+        std::io::stdin().read_line(&mut selection).unwrap();
+        selection = selection.trim().to_string();
+
+        while selection.parse::<i32>().is_err() || selection.parse::<i32>().unwrap() < 1 || selection.parse::<i32>().unwrap() > 5 {
+            println!("Please enter a valid number.");
+            selection = String::new();
+            std::io::stdin().read_line(&mut selection).unwrap();
+        }
+
+        let num = selection.parse::<i32>().expect("Failed to parse selection.");
+
+        if num == 1 {
+            println!("Enter the amount of RAM you want to allocate to the server in gigabytes: ");
+
+            let mut ram_input = String::new();
+            std::io::stdin().read_line(&mut ram_input).unwrap();
+            ram_input = ram_input.trim().to_string();
+
+            while ram_input.parse::<i32>().is_err() || ram_input.parse::<i32>().unwrap() < 1 {
+                println!("Please enter a valid number.");
+                ram_input = String::new();
+                std::io::stdin().read_line(&mut ram_input).unwrap();
+            }
+
+            let ram = ram_input.parse::<i32>().expect("Failed to parse RAM.");
+
+            if os == "windows" {
+                create_launch_bat(config.get_java_install_path().expect("Failed to get Java path from config()").as_str(), ram).await;
+            } else {
+                create_launch_sh(config.get_java_install_path().expect("Failed to get Java path from config()").as_str(), ram).await;
+            }
+
+            println!("Launch script was created!");
+            return;
+        } else if num == 3   {
+            goodbye();
+            return;
+        }
+    }
+
     let java_key = if is_arm {
         os.to_string() + "_arm"
     } else {
@@ -55,16 +123,6 @@ async fn main() {
     };
 
     let client = Client::new();
-
-    if File::open("./server.jar").is_ok() {
-        println!("A server already exists. Do you want to delete it and download a new one? (y/n)");
-
-        if yes_or_no() {
-            std::fs::remove_file("./server.jar").unwrap();
-        } else {
-            return;
-        }
-    }
 
     println!();
     println!("What kind of server do you want to run?");
@@ -135,13 +193,21 @@ async fn main() {
 
     if yes_or_no() {
         if cfg!(target_os = "windows") {
-            create_launch_bat(java_path.as_str()).await;
+            create_launch_bat(java_path.as_str(), 3).await;
         } else {
-            create_launch_sh(java_path.as_str()).await;
+            create_launch_sh(java_path.as_str(), 3).await;
         }
     }
 
     println!();
+    println!("Your server is ready to go!");
+    println!("In order to allow other people to join, you will need to port forward your server.");
+    println!("If you need help with port forwarding, Google how to with your router!");
+    println!("If you need help with anything else, contact me on Discord: @loudbook");
+    println!();
+}
+
+fn goodbye() {
     println!("Hava a nice day!");
     println!("Tool was created by Loudbook, contact me on Discord: @loudbook");
     println!();
@@ -161,7 +227,7 @@ fn yes_or_no() -> bool {
     return input == "y";
 }
 
-async fn create_launch_bat(java_path: &str) {
+async fn create_launch_bat(java_path: &str, ram: i32) {
     println!("Creating launch script...");
 
     let file = File::create("./launch.bat").unwrap();
@@ -169,8 +235,9 @@ async fn create_launch_bat(java_path: &str) {
 
     file.write_all(
         format!(
-            "\"{}\" -Xms1024M -Xmx4G -jar server.jar nogui\npause",
-            java_path
+            "\"{}\" -Xms1024M -Xmx{}G -jar server.jar nogui\npause",
+            java_path,
+            ram
         )
         .as_bytes(),
     )
@@ -180,7 +247,7 @@ async fn create_launch_bat(java_path: &str) {
     println!("To start your server, double click on launch.bat");
 }
 
-async fn create_launch_sh(java_path: &str) {
+async fn create_launch_sh(java_path: &str, ram: i32) {
     println!("Creating launch script...");
 
     let file = File::create("./launch.sh").unwrap();
@@ -188,8 +255,9 @@ async fn create_launch_sh(java_path: &str) {
 
     file.write_all(
         format!(
-            "\"{}\" -Xms1024M -Xmx4G -jar server.jar nogui\npause",
-            java_path
+            "\"{}\" -Xms1024M -Xmx{}G -jar server.jar nogui\npause",
+            java_path,
+            ram
         )
         .as_bytes(),
     )

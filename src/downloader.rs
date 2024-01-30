@@ -39,10 +39,14 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
     return Ok(());
 }
 
-pub async fn version_index(minecraft_version: String) -> Result<i32, DownloadError> {
+pub async fn version_index(mut minecraft_version: String) -> Result<i32, DownloadError> {
     let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
     let manifest_body = reqwest::get(manifest_url).await?.text().await?;
     let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON.");
+
+    if minecraft_version == "latest" {
+        minecraft_version = get_latest_vanilla_version().await?;
+    }
 
     let version_array: Vec<&serde_json::Value> = manifest_json
         .get("versions")
@@ -58,4 +62,21 @@ pub async fn version_index(minecraft_version: String) -> Result<i32, DownloadErr
         .expect("Failed to get selected version.") as i32;
 
     return Ok(version_index);
+}
+
+pub async fn get_latest_vanilla_version() -> Result<String, DownloadError> {
+    let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
+    let manifest_body = reqwest::get(manifest_url).await?.text().await?;
+    let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON.");
+
+    let latest_version = manifest_json
+        .get("latest")
+        .expect("Failed to get latest release version.")
+        .get("release")
+        .expect("Failed to get latest release version.")
+        .as_str()
+        .expect("Failed to get latest release version as string.")
+        .to_string();
+
+    return Ok(latest_version);
 }
