@@ -20,12 +20,12 @@ A program to download any version of your favorite Minecraft server distribution
 - Double click the executable file.
 
 ## MacOS
-- Run `chmod +x ./installer-osx-x86_64` or `chmod +x ./installer-osx-aarch64`
-- Run `./installer-osx-x86_64` or `./installer-osx-aarch64`
+- Run `chmod +x ./server-installer-osx-x86_64` or `chmod +x ./server-installer-osx-aarch64`
+- Run `./server-installer-osx-x86_64` or `./server-installer-osx-aarch64`
 
 ## Linux
-- Run `chmod +x ./installer-linux-x86_64` or `chmod +x ./installer-linux-aarch64`
-- Run `./installer-linux-x86_64` or `chmod +x ./installer-linux-aarch64`
+- Run `chmod +x ./server-installer-linux-x86_64` or `chmod +x ./server-installer-linux-aarch64`
+- Run `./server-installer-linux-x86_64` or `chmod +x ./server-installer-linux-aarch64`
   
 # Final Notes
 - If you run into any issues, please, report them at the [issues](https://github.com/Loudbooks/Minecraft-Server-Installer/issues) page.
