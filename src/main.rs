@@ -160,6 +160,8 @@ async fn main() {
             .await
             .expect("Failed to download Java");
 
+        println!("Beginning server download...");
+
         if num == 1 {
             Vanilla::download(client.clone(), version_option)
                 .await
@@ -313,7 +315,7 @@ fn extract(file: &File, path: &str) {
 fn prepare_hook() {
     panic::set_hook(Box::new(|panic_info| {
         println!();
-        println!("Error: {}", panic_info.location().expect("Failed to get panic location"));
+        println!("Error: {}", panic_info);
         println!();
         println!("Please report this error to me on Discord: @loudbook");
         println!();
