@@ -363,7 +363,7 @@ fn change_port() {
 
     for line in lines {
         if line.contains("server-port=") {
-            println!("Enter the new port you want to use: ");
+            print!("Enter the new port you want to use: ");
 
             let mut new_port = user_input();
 
