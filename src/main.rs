@@ -214,8 +214,6 @@ fn change_ram(os: &str) {
     let ram = ram_input.parse::<i32>().expect("Failed to parse RAM");
 
     create_launch_script(None, os, ram);
-
-    println!("Launch script was created!");
 }
 
 fn goodbye() {
@@ -279,17 +277,15 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
         }
     }
 
-    if os == "windows" {
-        println!("Launch script was created!");
-    } else {
+    if os != "windows" {
         Command::new("chmod")
             .arg("+x")
             .arg("./launch.sh")
             .output()
             .expect("Failed to chmod launch.sh");
-
-        println!("Launch script was created!");
     }
+
+    println!("Launch script was created!");
 }
 
 async fn accept_eula() {
