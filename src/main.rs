@@ -317,7 +317,7 @@ fn extract(file: &File, path: &str) {
 fn prepare_hook() {
     panic::set_hook(Box::new(|panic_info| {
         println!();
-        println!("Error: {}", panic_info);
+        println!("Error: {}", panic_info.location().expect("Failed to get panic location"));
         println!();
         println!("Please report this error to me on Discord: @loudbook");
         println!();
