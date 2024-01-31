@@ -52,15 +52,15 @@ async fn main() {
         config.create();
     }
 
+    println!("Welcome to the Minecraft Server Installer!");
+    println!("This tool will help you set up a Minecraft server with ease.");
+    println!();
+    println!("If at any time you want to exit, type 'exit'.");
+    println!();
+
+    wait_for_enter("continue");
     loop {
         let mut ready = false;
-
-        println!("Welcome to the Minecraft Server Installer!");
-        println!("This tool will help you set up a Minecraft server with ease.");
-        println!();
-        println!("If at any time you want to exit, type 'exit'.");
-        println!();
-        wait_for_enter("continue");
 
         if os == "windows" {
             if File::open("./launch.bat").is_ok() {
@@ -88,7 +88,7 @@ async fn main() {
             let mut selection = user_input();
 
             while match selection.parse::<i32>() {
-                Ok(value) => value < 1 || value > 5,
+                Ok(value) => value < 1 || value > 4,
                 Err(_) => true,
             } {
                 print!("Please enter a valid number: ");
@@ -98,14 +98,14 @@ async fn main() {
             let num = selection.parse::<i32>().expect("Failed to parse selection");
 
             if num == 1 {
-                run_launch_file(os);
-                return;
+                run_launch_file(os).await;
+                continue
             } else if num == 2 {
                 change_ram(os);
-                return;
+                continue
             } else if num == 3 {
                 change_port();
-                return;
+                continue
             } else if num == 4 {
                 if let Ok(_) = fs::remove_file("./server.jar") {
                     println!("Server file was removed.");
@@ -151,6 +151,8 @@ async fn main() {
             Some(minecraft_version.clone())
         };
 
+        println!("Beginning download...");
+
         let java_version = config.get_java_version(minecraft_version.clone()).await.expect("Failed to get Java version");
         let java_install_path = &config.get_java_install_path().expect("Failed to get Java path from config");
 
@@ -195,10 +197,11 @@ async fn main() {
         print!("Would you like to run your server now? (y/n): ");
 
         if yes_or_no() {
-            run_launch_file(os);
+            run_launch_file(os).await;
         } else {
             goodbye();
             wait_for_enter("exit");
+            exit(0)
         }
     }
 }
@@ -331,7 +334,7 @@ fn wait_for_enter(message: &str) {
     let _ = stdin().read_line(&mut String::new());
 }
 
-fn run_launch_file(os: &str) {
+async fn run_launch_file(os: &str) {
     println!("Starting server...");
 
     let mut content = String::new();
@@ -392,12 +395,7 @@ fn user_input() -> String {
     stdout().flush().expect("Failed to flush");
     stdin().read_line(&mut input).expect("Did not enter a correct string");
 
-    let new_line = Some('\n');
-    let carriage_return = Some('\r');
-
-    if new_line == input.chars().next_back() || carriage_return == input.chars().next_back() {
-        input.pop();
-    }
+    input = input.trim().to_string();
 
     if input == "exit" {
         goodbye();
