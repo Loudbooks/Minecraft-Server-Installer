@@ -5,22 +5,18 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Vanilla {}
 
 impl Downloader for Vanilla {
-    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError> {
+    async fn download(client: Client, mut minecraft_version: Option<String>) -> Result<(), DownloadError> {
         println!("Downloading Vanilla server...");
 
         let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
         let manifest_body = reqwest::get(manifest_url).await?.text().await?;
         let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON");
 
-        let version_number;
-
         if minecraft_version.is_none() {
-            version_number = get_latest_vanilla_version().await?;
-        } else {
-            version_number = minecraft_version.unwrap();
+            minecraft_version = Some(get_latest_vanilla_version().await?);
         }
 
-        println!("Using version {}", version_number);
+        println!("Using version {}", &minecraft_version.as_ref().unwrap());
 
         let version_url = manifest_json
             .get("versions")
@@ -28,7 +24,7 @@ impl Downloader for Vanilla {
             .as_array()
             .expect("Failed to get versions as array")
             .iter()
-            .find(|version| version["id"].as_str().expect("Failed to get ID") == version_number)
+            .find(|version| version["id"].as_str().expect("Failed to get ID") == minecraft_version.clone().unwrap())
             .and_then(|version| version["url"].as_str());
 
         let version_body = reqwest::get(version_url.expect("Version not found!")).await?.text().await?;
@@ -42,6 +38,6 @@ impl Downloader for Vanilla {
 
         download_file(&client, &server_url.to_string(), "./server.jar").await?;
 
-        return Ok(());
+        Ok(())
     }
 }

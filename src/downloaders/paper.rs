@@ -16,15 +16,15 @@ impl Downloader for Paper {
         );
 
         let url = format!(
-            "https://api.papermc.io/v2/projects/paper/versions/{}/builds/{}/downloads/{}",
+            "https://api.papermc.io/v2/projects/paper/versions/{}/builds/{}/downloads/paper-{}-{}.jar",
             paper_version,
             latest_build,
-            format!("paper-{}-{}.jar", paper_version, latest_build)
+            paper_version, latest_build
         );
 
         download_file(&client, &url, "./server.jar").await?;
 
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -34,7 +34,7 @@ async fn get_latest_paper_version(minecraft_version: Option<String>) -> Result<S
     let json: serde_json::Value = response.json().await?;
     let versions = json["versions"].as_array().ok_or("JSON is invalid!")?;
 
-    return if minecraft_version.is_none() {
+    if minecraft_version.is_none() {
         let paper_version = versions
             .last()
             .and_then(|v| v.as_str())
@@ -84,5 +84,5 @@ async fn get_latest_build(paper_version: &str) -> Result<String, Box<dyn Error>>
         .max()
         .ok_or("No builds found")?;
 
-    return Ok(build.to_string());
+    Ok(build.to_string())
 }

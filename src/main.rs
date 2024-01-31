@@ -66,10 +66,8 @@ async fn main() {
             if File::open("./launch.bat").is_ok() {
                 ready = true;
             }
-        } else {
-            if File::open("./launch.sh").is_ok() {
-                ready = true;
-            }
+        } else if File::open("./launch.sh").is_ok() {
+            ready = true;
         }
 
         if File::open("./server.jar").is_ok() {
@@ -88,7 +86,7 @@ async fn main() {
             let mut selection = user_input();
 
             while match selection.parse::<i32>() {
-                Ok(value) => value < 1 || value > 4,
+                Ok(value) => !(1..=4).contains(&value),
                 Err(_) => true,
             } {
                 print!("Please enter a valid number: ");
@@ -106,10 +104,8 @@ async fn main() {
             } else if num == 3 {
                 change_port();
                 continue
-            } else if num == 4 {
-                if let Ok(_) = fs::remove_file("./server.jar") {
-                    println!("Server file was removed.");
-                }
+            } else if num == 4 && fs::remove_file("./server.jar").is_ok() {
+                println!("Server file was removed.");
             }
         }
 
@@ -131,7 +127,7 @@ async fn main() {
         let mut server_type = user_input();
 
         while match server_type.parse::<i32>() {
-            Ok(value) => value < 1 || value > 3,
+            Ok(value) => !(1..=3).contains(&value),
             Err(_) => true,
         } {
             print!("Please enter a valid number: ");
@@ -160,7 +156,7 @@ async fn main() {
 
         println!("Using Java {}", java_version);
 
-        download_java(&client, java_install_path.as_str(), java_path.as_str(), &config.get_java_download(java_key, java_version).unwrap().as_str())
+        download_java(&client, java_install_path.as_str(), java_path.as_str(), config.get_java_download(java_key, java_version).unwrap().as_str())
             .await
             .expect("Failed to download Java");
 
@@ -234,7 +230,7 @@ fn yes_or_no() -> bool {
         input = user_input();
     }
 
-    return input == "y";
+    input == "y"
 }
 
 fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
@@ -342,7 +338,7 @@ async fn run_launch_file(os: &str) {
         File::open("./launch.sh").expect("Failed to open launch.sh").read_to_string(&mut content).expect("Failed to read launch.sh");
     };
 
-    let java_path = content.split_whitespace().collect::<Vec<&str>>()[0].replace("\"", "");
+    let java_path = content.split_whitespace().collect::<Vec<&str>>()[0].replace('"', "");
     let args = &content.split_whitespace().collect::<Vec<&str>>()[1..];
 
     Command::new(java_path).args(args.iter()).spawn().expect("Failed to start server").wait().expect("Failed to wait for server to start");
@@ -370,7 +366,7 @@ fn change_port() {
                 new_port = user_input();
             }
 
-            new_lines.push(line.split("=").collect::<Vec<&str>>()[0].to_string() + format!("={}", new_port).as_str());
+            new_lines.push(line.split('=').collect::<Vec<&str>>()[0].to_string() + format!("={}", new_port).as_str());
         } else {
             new_lines.push(line.to_string());
         }
@@ -380,7 +376,7 @@ fn change_port() {
     let mut file = BufWriter::new(file);
 
     for mut line in new_lines {
-        line = line + "\n";
+        line += "\n";
         file.write_all(line.as_bytes()).expect("Failed to write to server.properties");
     }
 
@@ -401,5 +397,5 @@ fn user_input() -> String {
         exit(0);
     }
 
-    return input;
+    input
 }

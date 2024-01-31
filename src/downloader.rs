@@ -36,7 +36,7 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
 
     progress_bar.finish_with_message(format!("Downloaded {} to {}.", url, path));
 
-    return Ok(());
+    Ok(())
 }
 
 pub async fn version_index(mut minecraft_version: String) -> Result<i32, DownloadError> {
@@ -61,7 +61,7 @@ pub async fn version_index(mut minecraft_version: String) -> Result<i32, Downloa
         .position(|version| version["id"].as_str().expect("Failed to get ID") == minecraft_version)
         .expect("Failed to get selected version") as i32;
 
-    return Ok(version_index);
+    Ok(version_index)
 }
 
 pub async fn get_latest_vanilla_version() -> Result<String, DownloadError> {
@@ -78,5 +78,5 @@ pub async fn get_latest_vanilla_version() -> Result<String, DownloadError> {
         .expect("Failed to get latest release version as string")
         .to_string();
 
-    return Ok(latest_version);
+    Ok(latest_version)
 }

@@ -73,7 +73,7 @@ impl ConfigFile {
         let java_downloads = config.get("java_downloads").expect("Failed to get java_downloads");
         let java_download = java_downloads.get(key + "_" + version.to_string().as_str()).expect("Failed to get java_download key").as_str().expect("Failed to get java_download as string").to_string();
 
-        return Some(java_download);
+        Some(java_download)
     }
 
     pub fn get_java_path(&self, key: String, version: i32) -> Option<String> {
@@ -109,7 +109,7 @@ impl ConfigFile {
             .or(Some(self.default_config().java_version_thresholds.java_16.to_string())).expect("Failed to get default version for Java 16"))
             .await.expect("Failed to get version index for Java 16");
 
-        return if version_index >= java_17_index {
+        if version_index >= java_17_index {
             Some(17)
         } else if version_index >= java_16_index {
             Some(16)
@@ -122,11 +122,11 @@ impl ConfigFile {
         let string = fs::read_to_string(self.path.to_string() + "/msi-config.toml").expect("Failed to read config file");
         let config: Value = toml::from_str(&string).expect("Failed to parse config file");
 
-        return config;
+        config
     }
 
     fn default_config(&self) -> Config {
-        return Config {
+        Config {
             java_paths: JavaPaths {
                 java_install_paths: "./java".to_string(),
                 osx_8: "/jdk8u402-b06-jre/Contents/Home/bin/java".to_string(),
@@ -160,6 +160,6 @@ impl ConfigFile {
                 java_16: "21w19a".to_string(),
                 java_17: "1.18-pre2".to_string(),
             },
-        };
+        }
     }
 }

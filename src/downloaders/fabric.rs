@@ -22,7 +22,7 @@ impl Downloader for Fabric {
 
         download_file(&client, &url, "./server.jar").await?;
 
-        return Ok(());
+        Ok(())
     }
 }
 
@@ -33,7 +33,7 @@ async fn get_latest_fabric_version(minecraft_version: &Option<String>) -> Result
 
     let game_versions = json["game"].as_array().ok_or("Invalid JSON format")?;
 
-    return if minecraft_version.is_none() {
+    if minecraft_version.is_none() {
         let stable_game_version = game_versions
             .iter()
             .filter_map(|version| {

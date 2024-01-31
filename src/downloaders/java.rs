@@ -9,7 +9,7 @@ pub async fn download_java(client: &Client, java_install_path: &str, java_path: 
     if !Path::new(java_path).exists() {
         if cfg!(target_os = "windows") {
             println!("Downloading Java...");
-            download_file(&client, &url.to_string(), "./java.zip")
+            download_file(client, url, "./java.zip")
                 .await
                 .expect("Failed to download Java");
 
@@ -20,7 +20,7 @@ pub async fn download_java(client: &Client, java_install_path: &str, java_path: 
             std::fs::remove_file("./java.zip").expect("Failed to delete old Java file");
         } else {
             println!("Downloading Java...");
-            download_file(&client, &url.to_string(), "./java.tar.gz")
+            download_file(client, url, "./java.tar.gz")
                 .await
                 .expect("Failed to download Java");
 
@@ -33,5 +33,5 @@ pub async fn download_java(client: &Client, java_install_path: &str, java_path: 
     } else {
         println!("Java is ready.");
     }
-    return Ok(());
+    Ok(())
 }
