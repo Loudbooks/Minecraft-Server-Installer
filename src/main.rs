@@ -181,11 +181,8 @@ async fn main() {
         accept_eula().await;
 
         println!();
-        print!("Do you want to create a launch script? (RECOMMENDED FOR NEW USERS) (y/n): ");
 
-        if yes_or_no() {
-            create_launch_script(Some(java_path.as_str()), os, 3);
-        }
+        create_launch_script(Some(java_path.as_str()), os, 3);
 
         println!();
         println!("Your server is ready to go!");
@@ -349,6 +346,7 @@ async fn run_launch_file(os: &str) {
     let args = &content.split_whitespace().collect::<Vec<&str>>()[1..];
 
     Command::new(java_path).args(args.iter()).spawn().expect("Failed to start server").wait().expect("Failed to wait for server to start");
+    wait_for_enter("continue");
 }
 
 fn change_port() {
@@ -367,8 +365,8 @@ fn change_port() {
 
             let mut new_port = user_input();
 
-            while new_port.parse::<i32>().is_err() || new_port.parse::<i32>().unwrap() < 49152 || new_port.parse::<i32>().unwrap() > 65535 {
-                println!("Please enter a valid port number. (49152-65535)");
+            while new_port.parse::<i32>().is_err() || new_port.parse::<i32>().unwrap() < 1 || new_port.parse::<i32>().unwrap() > 65535 {
+                print!("Please enter a valid port: ");
                 new_port = user_input();
             }
 
@@ -387,6 +385,7 @@ fn change_port() {
     }
 
     println!("Port was changed!");
+    wait_for_enter("continue");
 }
 
 fn user_input() -> String {
