@@ -17,7 +17,7 @@ pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(),
 
     let progress_bar = ProgressBar::new(total_size);
     progress_bar.set_style(ProgressStyle::default_bar()
-        .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.cyan/blue}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})").expect("Failed to set progress bar style")
+        .template("{msg}\n{spinner:.green} [{elapsed_precise}] [{wide_bar:.green/white}] {bytes}/{total_bytes} ({bytes_per_sec}, {eta})").expect("Failed to set progress bar style")
         .progress_chars("#>-"));
 
     let mut file = File::create(path)?;

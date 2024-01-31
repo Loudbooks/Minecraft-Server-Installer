@@ -9,8 +9,8 @@ use flate2::read::GzDecoder;
 use reqwest::Client;
 use std::{env, fs, panic};
 use std::fs::File;
-use std::io::{BufReader, BufWriter, Read, stdin, stdout, Write};
-use std::process::{Command, exit};
+use std::io::{BufRead, BufReader, BufWriter, Read, stdin, stdout, Write};
+use std::process::{Command, exit, Stdio};
 use tar::Archive;
 use crate::downloader::Downloader;
 use crate::downloaders::fabric::Fabric;
@@ -341,7 +341,50 @@ async fn run_launch_file(os: &str) {
     let java_path = content.split_whitespace().collect::<Vec<&str>>()[0].replace('"', "");
     let args = &content.split_whitespace().collect::<Vec<&str>>()[1..];
 
-    Command::new(java_path).args(args.iter()).spawn().expect("Failed to start server").wait().expect("Failed to wait for server to start");
+    let mut process = Command::new(java_path)
+        .args(args.iter())
+        .stdout(Stdio::piped())
+        .spawn().expect("Failed to start server");
+
+    let out = process.stdout.take()
+        .expect("Failed to capture standard output");
+    let reader = BufReader::new(out);
+
+    let mut port: Option<u32> = None;
+    for line in reader.lines() {
+        let line = line;
+
+        if let Ok(line) = line {
+            println!("{}", line);
+
+            if line.contains("Starting Minecraft server on *:") {
+                let parsed_port = line.split("*:").collect::<Vec<&str>>()[1].parse::<u32>().expect("Failed to parse port");
+                println!("Port successfully parsed: {}", parsed_port);
+
+                port = Some(parsed_port);
+            }
+
+            if line.contains("Done (") {
+                println!();
+                println!("Server is ready!");
+                println!("To safely stop the server, type 'stop' and press enter.");
+
+                if port.is_some() {
+                    let ip = if port == Some(25565) {
+                        format!("{}", public_ip::addr().await.unwrap())
+                    } else {
+                        format!("{}:{}", public_ip::addr().await.unwrap(), port.unwrap())
+                    };
+
+                    println!("If you port forwarded your server, other people can join using the following IP: {}", ip);
+                }
+
+                println!();
+            }
+        }
+    }
+
+    process.wait().expect("Failed to wait for server to finish");
     wait_for_enter("continue");
 }
 
