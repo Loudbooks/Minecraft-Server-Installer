@@ -11,24 +11,24 @@ pub async fn download_java(client: &Client, java_install_path: &str, java_path: 
             println!("Downloading Java...");
             download_file(&client, &url.to_string(), "./java.zip")
                 .await
-                .expect("Failed to download Java.");
+                .expect("Failed to download Java");
 
             println!("Extracting Java...");
-            extract(&File::open("./java.zip").expect("Failed to unzip old Java file."), java_install_path);
+            extract(&File::open("./java.zip").expect("Failed to unzip old Java file"), java_install_path);
 
             println!("Deleting old Java file...");
-            std::fs::remove_file("./java.zip").expect("Failed to delete old Java file.");
+            std::fs::remove_file("./java.zip").expect("Failed to delete old Java file");
         } else {
             println!("Downloading Java...");
             download_file(&client, &url.to_string(), "./java.tar.gz")
                 .await
-                .expect("Failed to download Java.");
+                .expect("Failed to download Java");
 
             println!("Extracting Java...");
-            extract(&File::open("./java.tar.gz").expect("Failed to unzip old Java file."), java_install_path);
+            extract(&File::open("./java.tar.gz").expect("Failed to unzip old Java file"), java_install_path);
 
             println!("Deleting old Java file...");
-            std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file.");
+            std::fs::remove_file("./java.tar.gz").expect("Failed to delete old Java file");
         }
     } else {
         println!("Java is ready.");

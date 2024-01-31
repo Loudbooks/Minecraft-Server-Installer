@@ -59,19 +59,19 @@ pub struct JavaVersionThresholds {
 impl ConfigFile {
     pub fn create(&self) {
         let path = self.path.clone().to_string();
-        let file = File::create(format!("{path}/msi-config.toml")).expect("Failed to create config file.");
+        let file = File::create(format!("{path}/msi-config.toml")).expect("Failed to create config file");
 
         let mut file = std::io::BufWriter::new(file);
 
-        let toml_config = toml::to_string(&self.default_config()).expect("Failed to convert config to TOML.");
-        file.write_all(toml_config.as_bytes()).expect("Failed to write config to file.");
+        let toml_config = toml::to_string(&self.default_config()).expect("Failed to convert config to TOML");
+        file.write_all(toml_config.as_bytes()).expect("Failed to write config to file");
     }
 
     pub fn get_java_download(&self, key: String, version: i32) -> Option<String> {
         let config = self.clone().get_config();
 
-        let java_downloads = config.get("java_downloads").expect("Failed to get java_downloads.");
-        let java_download = java_downloads.get(key + "_" + version.to_string().as_str()).expect("Failed to get java_download key.").as_str().expect("Failed to get java_download as string.").to_string();
+        let java_downloads = config.get("java_downloads").expect("Failed to get java_downloads");
+        let java_download = java_downloads.get(key + "_" + version.to_string().as_str()).expect("Failed to get java_download key").as_str().expect("Failed to get java_download as string").to_string();
 
         return Some(java_download);
     }
@@ -79,35 +79,35 @@ impl ConfigFile {
     pub fn get_java_path(&self, key: String, version: i32) -> Option<String> {
         let config = self.get_config();
 
-        let java_paths = config.get("java_paths").expect("Failed to get java_paths.");
+        let java_paths = config.get("java_paths").expect("Failed to get java_paths");
 
-        return Some(java_paths.get(key + "_" + version.to_string().as_str()).expect("Failed to get java_path key.").as_str().expect("Failed to get java_path as string.").to_string());
+        return Some(java_paths.get(key + "_" + version.to_string().as_str()).expect("Failed to get java_path key").as_str().expect("Failed to get java_path as string").to_string());
     }
 
     pub fn get_java_install_path(&self) -> Option<String> {
         let config = self.get_config();
 
-        let java_install_paths = config.get("java_paths").expect("Failed to get java_install_paths.");
+        let java_install_paths = config.get("java_paths").expect("Failed to get java_install_paths");
 
-        return Some(java_install_paths.get("java_install_paths").expect("Failed to get java_install_path key.").as_str().expect("Failed to get java_install_path as string.").to_string());
+        return Some(java_install_paths.get("java_install_paths").expect("Failed to get java_install_path key").as_str().expect("Failed to get java_install_path as string").to_string());
     }
 
     pub fn get_java_version_threshold(&self, key: String) -> Option<String> {
         let config = self.get_config();
 
-        let java_version_thresholds = config.get("java_version_thresholds").expect("Failed to get java_version_thresholds.");
+        let java_version_thresholds = config.get("java_version_thresholds").expect("Failed to get java_version_thresholds");
 
-        return Some(java_version_thresholds.get(key).expect("Failed to get java_version key.").as_str().expect("Failed to get java_version as string.").to_string());
+        return Some(java_version_thresholds.get(key).expect("Failed to get java_version key").as_str().expect("Failed to get java_version as string").to_string());
     }
 
     pub async fn get_java_version(&self, minecraft_version: String) -> Option<i32> {
-        let version_index = downloader::version_index(minecraft_version).await.expect("Failed to get version index.");
+        let version_index = downloader::version_index(minecraft_version).await.expect("Failed to get version index");
         let java_17_index = downloader::version_index(self.get_java_version_threshold("java_17".to_string())
-            .or(Some(self.default_config().java_version_thresholds.java_17.to_string())).expect("Failed to get default version for Java 17."))
-            .await.expect("Failed to get version index for Java 17.");
+            .or(Some(self.default_config().java_version_thresholds.java_17.to_string())).expect("Failed to get default version for Java 17"))
+            .await.expect("Failed to get version index for Java 17");
         let java_16_index = downloader::version_index(self.get_java_version_threshold("java_16".to_string())
-            .or(Some(self.default_config().java_version_thresholds.java_16.to_string())).expect("Failed to get default version for Java 16."))
-            .await.expect("Failed to get version index for Java 16.");
+            .or(Some(self.default_config().java_version_thresholds.java_16.to_string())).expect("Failed to get default version for Java 16"))
+            .await.expect("Failed to get version index for Java 16");
 
         return if version_index >= java_17_index {
             Some(17)
@@ -119,8 +119,8 @@ impl ConfigFile {
     }
 
     fn get_config(&self) -> Value {
-        let string = fs::read_to_string(self.path.to_string() + "/msi-config.toml").expect("Failed to read config file.");
-        let config: Value = toml::from_str(&string).expect("Failed to parse config file.");
+        let string = fs::read_to_string(self.path.to_string() + "/msi-config.toml").expect("Failed to read config file");
+        let config: Value = toml::from_str(&string).expect("Failed to parse config file");
 
         return config;
     }

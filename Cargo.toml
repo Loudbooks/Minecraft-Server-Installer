@@ -1,5 +1,5 @@
 [package]
-name = "minecraft-server-installer"
+name = "minecraft_server_installer"
 version = "0.1.0"
 edition = "2021"
 

@@ -10,7 +10,7 @@ impl Downloader for Vanilla {
 
         let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
         let manifest_body = reqwest::get(manifest_url).await?.text().await?;
-        let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON.");
+        let manifest_json: serde_json::Value = serde_json::from_str(&manifest_body).expect("Failed to parse manifest JSON");
 
         let version_number;
 
@@ -38,7 +38,7 @@ impl Downloader for Vanilla {
                 let downloads = json.get("downloads")?.clone();
                 let server = downloads.get("server")?.clone();
                 server.get("url")?.as_str().map(|url| url.to_string())
-            }).expect("Failed to get server URL.");
+            }).expect("Failed to get server URL");
 
         download_file(&client, &server_url.to_string(), "./server.jar").await?;
 
