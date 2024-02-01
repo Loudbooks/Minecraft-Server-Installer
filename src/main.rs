@@ -123,7 +123,7 @@ async fn main() {
         println!("What kind of server do you want to run?");
         println!("1. Vanilla - The original Minecraft server. No plugins or mods.");
         println!("2. Paper - A Minecraft server with plugins.");
-        println!("3. FabricMC - A Minecraft server with Fabric mods.");
+        println!("3. Fabric - A Minecraft server with Fabric mods.");
         println!("4. Forge - A Minecraft server with Forge mods.");
         println!("5. Neoforge - A Minecraft server with Neoforge mods.");
         println!();

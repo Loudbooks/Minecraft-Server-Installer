@@ -24,7 +24,8 @@ impl Downloader for Forge {
             forge_version
         );
 
-        let url = if minecraft_version.clone().unwrap().split('.').collect::<Vec<&str>>().get(1).unwrap().eq(&"7") {
+        let url = if minecraft_version.clone().unwrap().split('.').collect::<Vec<&str>>().get(1).unwrap().eq(&"7") ||
+            minecraft_version.eq(&Some("1.8.9".to_string())) { // These two are the only versions that have a different URL format
             format!(
                 "https://files.minecraftforge.net/maven/net/minecraftforge/forge/{}-{}-{}/forge-{}-{}-{}-installer.jar",
                 minecraft_version.clone().unwrap_or("".to_string()),
@@ -57,6 +58,11 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
         minecraft_version = Some(get_latest_forge_version().await.expect("Failed to get latest forge version"));
     }
 
+    if fs::metadata("forge.jar").unwrap().len() < 1000 {
+        fs::remove_file("forge.jar").expect("Failed to remove forge jar");
+        panic!("Forge version not found.");
+    }
+
     let mut process = command
         .arg("-jar")
         .arg("forge.jar")
@@ -65,19 +71,27 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
         .spawn()
         .expect("Failed to build server");
 
-    println!("Building server with Forge version {}. This will take a while...", minecraft_version.clone().unwrap_or("".to_string()));
-
     process.wait().expect("Failed to build server");
 
     let forge_version = get_forge_build(minecraft_version.clone()).await.expect("Failed to get latest forge version");
-    let mut file_name = format!("./forge-{}-{}-shim.jar", minecraft_version.clone().unwrap(), forge_version);
+    let minecraft_version = minecraft_version.unwrap();
+
+    println!("Building server with Forge version {}. This will take a while...", minecraft_version);
+
+    let mut file_name = format!("./forge-{}-{}-shim.jar", minecraft_version, forge_version);
 
     if File::open(&file_name).is_err() {
-        file_name = format!("./minecraftforge-universal-{}-{}.jar", minecraft_version.clone().unwrap(), forge_version);
+        file_name = format!("./minecraftforge-universal-{}-{}.jar", minecraft_version, forge_version); // Forge has a seemingly random naming scheme
+    }                                                                                                  // so we have to try a few different names
+                                                                                                       // but actually, wtf forge.
+    if File::open(&file_name).is_err() {
+        file_name = format!("./forge-{}-{}.jar", minecraft_version, forge_version);
     }
     if File::open(&file_name).is_err() {
-        file_name = format!("./forge-{}-{}.jar", minecraft_version.unwrap(), forge_version);
+        file_name = format!("./forge-{}-{}-{}-universal.jar", minecraft_version, forge_version, minecraft_version);
     }
+
+    println!("Renaming server {} to server.jar...", file_name);
 
     fs::rename(format!("./{}", file_name), "./server.jar").expect("Failed to rename server file");
     fs::remove_file("./forge.jar").expect("Failed to delete forge file");
