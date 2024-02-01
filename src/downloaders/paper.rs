@@ -6,7 +6,7 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Paper {}
 
 impl Downloader for Paper {
-    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError> {
+    async fn download(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let paper_version = get_latest_paper_version(minecraft_version).await.expect("Failed to get latest paper version");
         let latest_build = get_latest_build(&paper_version).await.expect("Failed to get latest paper build");
 
@@ -24,7 +24,7 @@ impl Downloader for Paper {
 
         download_file(&client, &url, "./server.jar").await?;
 
-        Ok(())
+        Ok(paper_version)
     }
 }
 

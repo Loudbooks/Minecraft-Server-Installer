@@ -8,7 +8,7 @@ use crate::downloaderror::DownloadError;
 
 #[allow(async_fn_in_trait)]
 pub trait Downloader {
-    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError>;
+    async fn download(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError>;
 }
 
 pub async fn download_file(client: &Client, url: &str, path: &str) -> Result<(), DownloadError> {

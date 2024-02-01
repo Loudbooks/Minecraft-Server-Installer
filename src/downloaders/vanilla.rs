@@ -5,7 +5,7 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Vanilla {}
 
 impl Downloader for Vanilla {
-    async fn download(client: Client, mut minecraft_version: Option<String>) -> Result<(), DownloadError> {
+    async fn download(client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
         println!("Downloading Vanilla server...");
 
         let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
@@ -38,6 +38,6 @@ impl Downloader for Vanilla {
 
         download_file(&client, &server_url.to_string(), "./server.jar").await?;
 
-        Ok(())
+        Ok(minecraft_version.unwrap().to_string())
     }
 }

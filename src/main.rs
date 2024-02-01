@@ -14,7 +14,10 @@ use std::process::{Command, exit, Stdio};
 use tar::Archive;
 use crate::downloader::Downloader;
 use crate::downloaders::fabric::Fabric;
+use crate::downloaders::{forge, neoforge};
+use crate::downloaders::forge::Forge;
 use crate::downloaders::java::download_java;
+use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
 use crate::downloaders::vanilla::Vanilla;
 
@@ -121,13 +124,15 @@ async fn main() {
         println!("1. Vanilla - The original Minecraft server. No plugins or mods.");
         println!("2. Paper - A Minecraft server with plugins.");
         println!("3. FabricMC - A Minecraft server with Fabric mods.");
+        println!("4. Forge - A Minecraft server with Forge mods.");
+        println!("5. Neoforge - A Minecraft server with Neoforge mods.");
         println!();
-        print!("Enter the number of the server you want to run: (1-3): ");
+        print!("Enter the number of the server you want to run: (1-4): ");
 
         let mut server_type = user_input();
 
         while match server_type.parse::<i32>() {
-            Ok(value) => !(1..=3).contains(&value),
+            Ok(value) => !(1..=5).contains(&value),
             Err(_) => true,
         } {
             print!("Please enter a valid number: ");
@@ -161,7 +166,6 @@ async fn main() {
             .expect("Failed to download Java");
 
         println!("Beginning server download...");
-
         if num == 1 {
             Vanilla::download(client.clone(), version_option)
                 .await
@@ -174,13 +178,21 @@ async fn main() {
             Fabric::download(client.clone(), version_option)
                 .await
                 .expect("Failed to download Fabric");
+        } else if num == 4 {
+            Forge::download(client.clone(), version_option.clone()).await.expect("Failed to download Forge");
+            forge::build_server(java_path.clone(), version_option).await;
+        } else if num == 5 {
+            NeoForge::download(client.clone(), version_option.clone()).await.expect("Failed to download Neoforge");
+            neoforge::build_server(java_path.clone(), version_option).await;
         }
-
+        
         accept_eula().await;
 
         println!();
 
-        create_launch_script(Some(java_path.as_str()), os, 3);
+        if server_type.parse::<i32>().unwrap() != 5 {
+            create_launch_script(Some(java_path.as_str()), os, 3);
+        }
 
         println!();
         println!("Your server is ready to go!");
@@ -254,7 +266,7 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
 
             file.write_all(
                 format!(
-                    "{} -Xms1024M -Xmx{}G -jar server.jar nogui\npause",
+                    "{} -Xms1024M -Xmx{}G -jar server.jar \npause",
                     original_java_path,
                     ram
                 )
@@ -267,7 +279,7 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
 
             file.write_all(
                 format!(
-                    "\"{}\" -Xms1024M -Xmx{}G -jar server.jar nogui\npause",
+                    "\"{}\" -Xms1024M -Xmx{}G -jar server.jar \npause",
                     java_path,
                     ram
                 )
@@ -313,8 +325,6 @@ fn prepare_hook() {
         println!();
         println!("Error: {}", panic_info);
         println!();
-        println!("Please report this error to me on Discord: @loudbook");
-        println!();
 
         wait_for_enter("exit");
     }));
@@ -336,11 +346,16 @@ async fn run_launch_file(os: &str) {
         File::open("./launch.sh").expect("Failed to open launch.sh").read_to_string(&mut content).expect("Failed to read launch.sh");
     };
 
-    let java_path = content.split_whitespace().collect::<Vec<&str>>()[0].replace('"', "");
-    let args = &content.split_whitespace().collect::<Vec<&str>>()[1..];
+    let args_no_comments = content.lines().filter(
+        |line| !line.starts_with('#')).collect::<Vec<&str>>();
+
+    let java_path = &args_no_comments.clone().first().unwrap().split_whitespace().collect::<Vec<&str>>()[0].replace('"', "");
+    let args = &args_no_comments.first().unwrap().split_whitespace().collect::<Vec<&str>>()[1..];
+
+    println!("Starting server with Java path: {}", java_path);
 
     let mut process = Command::new(java_path)
-        .args(args.iter())
+        .args(args.iter().map(|s| s.replace('"', "")).collect::<Vec<String>>())
         .stdout(Stdio::piped())
         .spawn().expect("Failed to start server");
 

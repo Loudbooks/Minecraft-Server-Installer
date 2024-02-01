@@ -17,3 +17,5 @@ openssl = { version = "0.10", features = ["vendored"] }
 toml = "0.8.8"
 serde = { version = "1.0.196", features = ["derive"] }
 public-ip = "0.2"
+semver = "1.0.21"
+xml2json-rs = "1.0.1"

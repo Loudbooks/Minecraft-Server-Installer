@@ -6,7 +6,7 @@ use crate::downloaderror::DownloadError;
 pub(crate) struct Fabric {}
 
 impl Downloader for Fabric {
-    async fn download(client: Client, minecraft_version: Option<String>) -> Result<(), DownloadError> {
+    async fn download(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let fabric_version = get_latest_fabric_version(&minecraft_version).await.expect("Failed to get latest fabric version");
         let fabric_build = get_fabric_build().await.expect("Failed to get latest fabric build");
 
@@ -22,7 +22,7 @@ impl Downloader for Fabric {
 
         download_file(&client, &url, "./server.jar").await?;
 
-        Ok(())
+        Ok(fabric_version.to_string())
     }
 }
 
