@@ -8,8 +8,8 @@ A program to download any version of your favorite Minecraft server distribution
 
 # Server Support
 - Vanilla
-- PaperMC
-- FabricMC
+- Paper
+- Fabric
 
 
 # Download
