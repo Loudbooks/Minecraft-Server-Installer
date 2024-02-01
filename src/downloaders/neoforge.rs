@@ -9,9 +9,9 @@ pub(crate) struct NeoForge {}
 
 impl Downloader for NeoForge {
     async fn download(client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
-        let neo_version = get_neoforge_version(minecraft_version).await.expect("Failed to get latest Neoforge version");
+        let neo_version = get_neoforge_version(minecraft_version).await.expect("Failed to get latest NeoForge version");
 
-        println!("Using Neoforge version {}.", neo_version);
+        println!("Using NeoForge version {}.", neo_version);
 
         let url = format!(
             "https://maven.neoforged.net/releases/net/neoforged/neoforge/{}/neoforge-{}-installer.jar",
@@ -41,11 +41,11 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
         .spawn()
         .expect("Failed to build server");
 
-    println!("Building server with Neoforge version {}. This will take a while...", minecraft_version.clone().unwrap_or("".to_string()));
+    println!("Building server with NeoForge version {}. This will take a while...", minecraft_version.clone().unwrap_or("".to_string()));
 
     process.wait().expect("Failed to build server");
 
-    fs::remove_file("neoforge.jar").await.expect("Failed to remove Neoforge jar");
+    fs::remove_file("neoforge.jar").await.expect("Failed to remove NeoForge jar");
     fs::rename("run.sh", "launch.sh").await.expect("Failed to rename run.sh to launch.sh");
 
     let mut content = String::new();
@@ -68,21 +68,21 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
 }
 
 async fn get_version_array() -> Vec<Value> {
-    let response = reqwest::get("https://maven.neoforged.net/releases/net/neoforged/neoforge//maven-metadata.xml").await.expect("Failed to get Neoforge metadata");
-    let body = response.text().await.expect("Failed to get Neoforge metadata");
+    let response = reqwest::get("https://maven.neoforged.net/releases/net/neoforged/neoforge//maven-metadata.xml").await.expect("Failed to get NeoForge metadata");
+    let body = response.text().await.expect("Failed to get NeoForge metadata");
     let builder = JsonBuilder::default();
     let json = builder.build_from_xml(body.as_str()).unwrap();
 
-    json.get("metadata").expect("Failed step 1 of Neoforge")
-        .get("versioning").expect("Failed step 2 of Neoforge")
-        .as_array().expect("Failed step 3 of Neoforge")
-        .first().expect("Failed step 4 of Neoforge")
-        .get("versions").expect("Failed step 5 of Neoforge")
-        .as_array().expect("Failed step 6 of Neoforge")
-        .first().expect("Failed step 7 of Neoforge")
-        .as_object().expect("Failed step 8 of Neoforge")
-        .get("version").expect("Failed step 9 of Neoforge")
-        .as_array().expect("Failed step 10 of Neoforge")
+    json.get("metadata").expect("Failed step 1 of NeoForge")
+        .get("versioning").expect("Failed step 2 of NeoForge")
+        .as_array().expect("Failed step 3 of NeoForge")
+        .first().expect("Failed step 4 of NeoForge")
+        .get("versions").expect("Failed step 5 of NeoForge")
+        .as_array().expect("Failed step 6 of NeoForge")
+        .first().expect("Failed step 7 of NeoForge")
+        .as_object().expect("Failed step 8 of NeoForge")
+        .get("version").expect("Failed step 9 of NeoForge")
+        .as_array().expect("Failed step 10 of NeoForge")
         .to_owned()
 }
 

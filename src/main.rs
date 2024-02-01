@@ -125,7 +125,7 @@ async fn main() {
         println!("2. Paper - A Minecraft server with plugins.");
         println!("3. Fabric - A Minecraft server with Fabric mods.");
         println!("4. Forge - A Minecraft server with Forge mods.");
-        println!("5. Neoforge - A Minecraft server with Neoforge mods.");
+        println!("5. NeoForge - A Minecraft server with NeoForge mods.");
         println!();
         print!("Enter the number of the server you want to run: (1-5): ");
 
@@ -182,7 +182,7 @@ async fn main() {
             Forge::download(client.clone(), version_option.clone()).await.expect("Failed to download Forge");
             forge::build_server(java_path.clone(), version_option).await;
         } else if num == 5 {
-            NeoForge::download(client.clone(), version_option.clone()).await.expect("Failed to download Neoforge");
+            NeoForge::download(client.clone(), version_option.clone()).await.expect("Failed to download NeoForge");
             neoforge::build_server(java_path.clone(), version_option).await;
         }
         
