@@ -95,6 +95,8 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
 
     fs::rename(format!("./{}", file_name), "./server.jar").expect("Failed to rename server file");
     fs::remove_file("./forge.jar").expect("Failed to delete forge file");
+    fs::remove_file("launch.sh").expect("Failed to remove run.sh");
+    fs::remove_file("launch.bat").expect("Failed to remove run.bat");
 }
 
 async fn get_forge_build(minecraft_version: Option<String>) -> Result<String, Box<dyn Error>> {

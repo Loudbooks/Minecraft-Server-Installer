@@ -102,7 +102,7 @@ async fn main() {
                 run_launch_file(os).await;
                 continue
             } else if num == 2 {
-                change_ram(os);
+                change_ram();
                 continue
             } else if num == 3 {
                 change_port();
@@ -190,8 +190,10 @@ async fn main() {
 
         println!();
 
-        if server_type.parse::<i32>().unwrap() != 5 {
+        if num != 5 {
             create_launch_script(Some(java_path.as_str()), os, 3);
+        } else {
+            create_args_file(3);
         }
 
         println!();
@@ -213,19 +215,19 @@ async fn main() {
     }
 }
 
-fn change_ram(os: &str) {
+fn change_ram() {
     print!("Enter the amount of RAM you want to allocate to the server in gigabytes: ");
 
     let mut ram_input = user_input();
 
     while ram_input.parse::<i32>().is_err() || ram_input.parse::<i32>().unwrap() < 1 {
-        println!("Please enter a valid number.");
+        print!("Please enter a valid number: ");
         ram_input = user_input();
     }
 
     let ram = ram_input.parse::<i32>().expect("Failed to parse RAM");
 
-    create_launch_script(None, os, ram);
+    create_args_file(ram);
 }
 
 fn goodbye() {
@@ -257,21 +259,32 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
     match java_path {
         None => {
             let original_content = fs::read_to_string(file_name).expect("Failed to read launch file");
-            let original_java_path = original_content.split_whitespace().collect::<Vec<&str>>()[0];
+            let original_java_path = original_content.lines()
+                .filter(|line| !line.starts_with('#') && !line.starts_with("REM" ) && !line.starts_with('@'))
+                .collect::<Vec<&str>>().first().unwrap().split_whitespace().collect::<Vec<&str>>()[0];
 
             fs::remove_file(file_name).expect("Failed to remove launch file");
 
             let file = File::create(file_name).unwrap();
             let mut file = BufWriter::new(file);
 
-            file.write_all(
-                format!(
-                    "{} -Xms1024M -Xmx{}G -jar server.jar \npause",
-                    original_java_path,
-                    ram
-                )
-                    .as_bytes(),
-            ).expect("Failed to write to launch file");
+            if os == "windows" {
+                file.write_all(
+                    format!(
+                        "@echo off\n\"{}\" @user_jvm_args.txt -jar server.jar",
+                        original_java_path.replace('"', "")
+                    )
+                        .as_bytes(),
+                ).expect("Failed to write to launch file");
+            } else {
+                file.write_all(
+                    format!(
+                        "#!#!/usr/bin/env sh\n\"{}\" @user_jvm_args.txt -jar server.jar",
+                        original_java_path.replace('"', "")
+                    )
+                        .as_bytes(),
+                ).expect("Failed to write to launch file");
+            }
         }
         Some(java_path) => {
             let file = File::create(file_name).unwrap();
@@ -279,15 +292,16 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
 
             file.write_all(
                 format!(
-                    "\"{}\" -Xms1024M -Xmx{}G -jar server.jar \npause",
+                    "\"{}\" @user_jvm_args.txt -jar server.jar",
                     java_path,
-                    ram
                 )
                     .as_bytes(),
             )
-                .expect("Failed to write to launch file")
+                .expect("Failed to write to launch file");
         }
     }
+
+    create_args_file(ram);
 
     if os != "windows" {
         Command::new("chmod")
@@ -298,6 +312,43 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
     }
 
     println!("Launch script was created!");
+}
+
+fn create_args_file(ram: i32) {
+    match File::open("user_jvm_args.txt") {
+        Ok(_) => {
+            let mut file = File::open("user_jvm_args.txt").expect("Failed to open user_jvm_args.txt");
+            let mut content = String::new();
+            file.read_to_string(&mut content).expect("Failed to read user_jvm_args.txt");
+
+            let new_script = if content.contains("-Xmx") {
+                content.lines().collect::<Vec<&str>>().iter().map(|s| {
+                    if s.contains("-Xmx") && !s.starts_with('#') {
+                        format!("-Xmx{}G", ram)
+                    } else {
+                        s.to_string()
+                    }
+                }).collect::<Vec<String>>().join("\n")
+            } else {
+                format!("{} -Xms1024M -Xmx{}G", content, ram)
+            };
+
+            fs::write("user_jvm_args.txt", new_script).expect("Failed to write to user_jvm_args.txt");
+        }
+        Err(_) => {
+            let file = File::create("user_jvm_args.txt").unwrap();
+            let mut file = BufWriter::new(file);
+
+            file.write_all(
+                format!(
+                    "-Xms1024M -Xmx{}G",
+                    ram
+                )
+                    .as_bytes(),
+            )
+                .expect("Failed to write to user_jvm_args.txt");
+        }
+    };
 }
 
 async fn accept_eula() {
@@ -347,7 +398,7 @@ async fn run_launch_file(os: &str) {
     };
 
     let args_no_comments = content.lines().filter(
-        |line| !line.starts_with('#')).collect::<Vec<&str>>();
+        |line| !line.starts_with('#') && !line.starts_with("REM") && !line.starts_with('@')).collect::<Vec<&str>>();
 
     let java_path = &args_no_comments.clone().first().unwrap().split_whitespace().collect::<Vec<&str>>()[0].replace('"', "");
     let args = &args_no_comments.first().unwrap().split_whitespace().collect::<Vec<&str>>()[1..];

@@ -62,6 +62,8 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
     let new_content = content.replace("java", format!("\"{}\"", java_path.as_str()).as_str());
     fs::write("launch.bat", new_content).await.expect("Failed to write to launch.bat");
 
+    fs::remove_file("user_jvm_args.txt").await.expect("Failed to remove user_jvm_args.txt");
+
     println!("Server built successfully!");
 }
 
