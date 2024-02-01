@@ -127,7 +127,7 @@ async fn main() {
         println!("4. Forge - A Minecraft server with Forge mods.");
         println!("5. Neoforge - A Minecraft server with Neoforge mods.");
         println!();
-        print!("Enter the number of the server you want to run: (1-4): ");
+        print!("Enter the number of the server you want to run: (1-5): ");
 
         let mut server_type = user_input();
 
@@ -191,7 +191,7 @@ async fn main() {
         println!();
 
         if num != 5 {
-            create_launch_script(Some(java_path.as_str()), os, 3);
+            create_launch_script(Some(java_path.as_str()), java_version, os, 3);
         } else {
             create_args_file(3);
         }
@@ -247,13 +247,31 @@ fn yes_or_no() -> bool {
     input == "y"
 }
 
-fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
+fn create_launch_script(java_path: Option<&str>, java_version: i32, os: &str, ram: i32) {
     println!("Creating launch script...");
+    create_args_file(ram);
 
     let file_name = if os == "windows" {
         "./launch.bat"
     } else {
         "./launch.sh"
+    };
+
+    let args_str = if java_version == 8 {
+        let args_vec = fs::read_to_string("./user_jvm_args.txt").expect("Failed to read user_jvm_args.txt");
+        let args_vec = args_vec.split_whitespace().collect::<Vec<&str>>();
+
+        let mut args = String::new();
+
+        for arg in args_vec {
+            if !arg.starts_with('#') {
+                args += (" ".to_string() + arg).as_str()
+            }
+        }
+
+        args
+    } else {
+        "@user_jvm_args.txt".to_string()
     };
 
     match java_path {
@@ -271,16 +289,18 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
             if os == "windows" {
                 file.write_all(
                     format!(
-                        "@echo off\n\"{}\" @user_jvm_args.txt -jar server.jar",
-                        original_java_path.replace('"', "")
+                        "@echo off\n\"{}\" {} -jar server.jar",
+                        original_java_path.replace('"', ""),
+                        args_str
                     )
                         .as_bytes(),
                 ).expect("Failed to write to launch file");
             } else {
                 file.write_all(
                     format!(
-                        "#!#!/usr/bin/env sh\n\"{}\" @user_jvm_args.txt -jar server.jar",
-                        original_java_path.replace('"', "")
+                        "#!#!/usr/bin/env sh\n\"{}\" {} -jar server.jar",
+                        original_java_path.replace('"', ""),
+                        args_str
                     )
                         .as_bytes(),
                 ).expect("Failed to write to launch file");
@@ -292,16 +312,15 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
 
             file.write_all(
                 format!(
-                    "\"{}\" @user_jvm_args.txt -jar server.jar",
+                    "\"{}\" {} -jar server.jar",
                     java_path,
+                    args_str
                 )
                     .as_bytes(),
             )
                 .expect("Failed to write to launch file");
         }
     }
-
-    create_args_file(ram);
 
     if os != "windows" {
         Command::new("chmod")
@@ -315,7 +334,7 @@ fn create_launch_script(java_path: Option<&str>, os: &str, ram: i32) {
 }
 
 fn create_args_file(ram: i32) {
-    match File::open("user_jvm_args.txt") {
+    match File::open("./user_jvm_args.txt") {
         Ok(_) => {
             let mut file = File::open("user_jvm_args.txt").expect("Failed to open user_jvm_args.txt");
             let mut content = String::new();
@@ -336,7 +355,7 @@ fn create_args_file(ram: i32) {
             fs::write("user_jvm_args.txt", new_script).expect("Failed to write to user_jvm_args.txt");
         }
         Err(_) => {
-            let file = File::create("user_jvm_args.txt").unwrap();
+            let file = File::create("./user_jvm_args.txt").unwrap();
             let mut file = BufWriter::new(file);
 
             file.write_all(

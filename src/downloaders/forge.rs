@@ -83,20 +83,20 @@ pub async fn build_server(java_path: String, mut minecraft_version: Option<Strin
     if File::open(&file_name).is_err() {
         file_name = format!("./minecraftforge-universal-{}-{}.jar", minecraft_version, forge_version); // Forge has a seemingly random naming scheme
     }                                                                                                  // so we have to try a few different names
-                                                                                                       // but actually, wtf forge.
-    if File::open(&file_name).is_err() {
+    if File::open(&file_name).is_err() {                                                               // but actually, wtf forge.
         file_name = format!("./forge-{}-{}.jar", minecraft_version, forge_version);
     }
     if File::open(&file_name).is_err() {
         file_name = format!("./forge-{}-{}-{}-universal.jar", minecraft_version, forge_version, minecraft_version);
+    }
+    if File::open(&file_name).is_err() {
+        file_name = format!("./forge-{}-{}-universal.jar", minecraft_version, forge_version);
     }
 
     println!("Renaming server {} to server.jar...", file_name);
 
     fs::rename(format!("./{}", file_name), "./server.jar").expect("Failed to rename server file");
     fs::remove_file("./forge.jar").expect("Failed to delete forge file");
-    fs::remove_file("launch.sh").expect("Failed to remove run.sh");
-    fs::remove_file("launch.bat").expect("Failed to remove run.bat");
 }
 
 async fn get_forge_build(minecraft_version: Option<String>) -> Result<String, Box<dyn Error>> {
