@@ -29,4 +29,4 @@ A program to download any version of your favorite Minecraft server distribution
   
 # Final Notes
 - If you run into any issues, please, report them at the [issues](https://github.com/Loudbooks/Minecraft-Server-Installer/issues) page.
-- Forge is missing from this installer due to the fact they do not provide a mirror for their server files.
+- ~~Forge is missing from this installer due to the fact they do not provide a mirror for their server files.~~ Coming (very) soon!
