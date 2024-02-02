@@ -20,9 +20,9 @@ struct Config {
 #[derive(Deserialize, Serialize)]
 struct JavaPaths {
     java_install_paths: String,
-    osx_8: String,
-    osx_16: String,
-    osx_17: String,
+    macos_8: String,
+    macos_16: String,
+    macos_17: String,
     linux_8: String,
     linux_16: String,
     linux_17: String,
@@ -33,12 +33,12 @@ struct JavaPaths {
 
 #[derive(Deserialize, Serialize)]
 struct JavaDownloads {
-    osx_8: String,
-    osx_16: String,
-    osx_17: String,
-    osx_arm_8: String,
-    osx_arm_16: String,
-    osx_arm_17: String,
+    macos_8: String,
+    macos_16: String,
+    macos_17: String,
+    macos_arm_8: String,
+    macos_arm_16: String,
+    macos_arm_17: String,
     linux_8: String,
     linux_16: String,
     linux_17: String,
@@ -65,6 +65,23 @@ impl ConfigFile {
 
         let toml_config = toml::to_string(&self.default_config()).expect("Failed to convert config to TOML");
         file.write_all(toml_config.as_bytes()).expect("Failed to write config to file");
+    }
+
+    pub fn test(&self) {
+        let string = fs::read_to_string(self.path.to_string() + "/msi-config.toml");
+
+        if string.is_err() {
+            self.create();
+        }
+
+        if toml::from_str::<Config>(&string.unwrap()).is_err() {
+            println!("Failed to parse config file, regenerating file.");
+            fs::copy(self.path.to_string() + "/msi-config.toml", self.path.to_string() + "/msi-config-old.toml").expect("Failed to backup config file");
+            println!("Backed up old config file to msi-config-old.toml");
+
+            self.create();
+        }
+
     }
 
     pub fn get_java_download(&self, key: String, version: i32) -> Option<String> {
@@ -129,9 +146,9 @@ impl ConfigFile {
         Config {
             java_paths: JavaPaths {
                 java_install_paths: "./java".to_string(),
-                osx_8: "/jdk8u402-b06-jre/Contents/Home/bin/java".to_string(),
-                osx_16: "/jdk-16.0.2+7-jre/Contents/Home/bin/java".to_string(),
-                osx_17: "/jdk-17.0.10+7-jre/Contents/Home/bin/java".to_string(),
+                macos_8: "/jdk8u402-b06-jre/Contents/Home/bin/java".to_string(),
+                macos_16: "/jdk-16.0.2+7-jre/Contents/Home/bin/java".to_string(),
+                macos_17: "/jdk-17.0.10+7-jre/Contents/Home/bin/java".to_string(),
                 linux_8: "/jdk8u402-b06-jre/bin/java".to_string(),
                 linux_16: "/jdk-16.0.2+7-jre/bin/java".to_string(),
                 linux_17: "/jdk-17.0.10+7-jre/bin/java".to_string(),
@@ -140,12 +157,12 @@ impl ConfigFile {
                 windows_17: "/jdk-17.0.10+7-jre/bin/java.exe".to_string(),
             },
             java_downloads: JavaDownloads {
-                osx_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_mac_hotspot_8u402b06.tar.gz".to_string(),
-                osx_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_x64_mac_hotspot_2021-09-14-01-32.tar.gz".to_string(),
-                osx_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_mac_hotspot_17.0.10_7.tar.gz".to_string(),
-                osx_arm_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_mac_hotspot_8u402b06.tar.gz".to_string(),
-                osx_arm_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_aarch64_linux_hotspot_2021-09-14-01-32.tar.gz".to_string(),
-                osx_arm_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.10_7.tar.gz".to_string(),
+                macos_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_mac_hotspot_8u402b06.tar.gz".to_string(),
+                macos_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_x64_mac_hotspot_2021-09-14-01-32.tar.gz".to_string(),
+                macos_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_mac_hotspot_17.0.10_7.tar.gz".to_string(),
+                macos_arm_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_mac_hotspot_8u402b06.tar.gz".to_string(),
+                macos_arm_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_aarch64_linux_hotspot_2021-09-14-01-32.tar.gz".to_string(),
+                macos_arm_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_aarch64_mac_hotspot_17.0.10_7.tar.gz".to_string(),
                 linux_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_linux_hotspot_8u402b06.tar.gz".to_string(),
                 linux_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_x64_linux_hotspot_2021-09-14-01-32.tar.gz".to_string(),
                 linux_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_linux_hotspot_17.0.10_7.tar.gz".to_string(),

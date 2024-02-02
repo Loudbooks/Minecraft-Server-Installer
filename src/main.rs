@@ -4,6 +4,7 @@ pub mod downloaders;
 pub mod config;
 pub mod downloader;
 pub mod downloaderror;
+pub mod os;
 
 use flate2::read::GzDecoder;
 use reqwest::Client;
@@ -20,6 +21,7 @@ use crate::downloaders::java::download_java;
 use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
 use crate::downloaders::vanilla::Vanilla;
+use crate::os::OS;
 
 #[tokio::main]
 async fn main() {
@@ -27,20 +29,19 @@ async fn main() {
 
     let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");
     let os = if cfg!(target_os = "macos") {
-        "osx"
+        OS::MacOS
     } else if cfg!(target_os = "linux") {
-        "linux"
+        OS::Linux
     } else if cfg!(target_os = "windows") {
-        "windows"
+        OS::Windows
     } else {
-        println!("Unsupported OS.");
-        return;
+        panic!("Unsupported OS.");
     };
 
     let config = config::ConfigFile {
-        path: if os == "windows" {
+        path: if os == OS::Windows {
             env::var("APPDATA").expect("Failed to retrieve APPDATA variable") + "\\MinecraftServerInstaller"
-        } else if os == "linux" {
+        } else if os == OS::Linux {
             env::var("XDG_CONFIG_HOME").expect("Failed to retrieve XDG_CONFIG_HOME variable") + "/MinecraftServerInstaller"
         } else {
             env::var("HOME").expect("Failed to retrieve HOME variable") + "/Library/Application Support/MinecraftServerInstaller"
@@ -55,6 +56,8 @@ async fn main() {
         config.create();
     }
 
+    config.test();
+
     println!("Welcome to the Minecraft Server Installer!");
     println!("This tool will help you set up a Minecraft server with ease.");
     println!();
@@ -65,7 +68,7 @@ async fn main() {
     loop {
         let mut ready = false;
 
-        if os == "windows" {
+        if os == OS::Windows {
             if File::open("./launch.bat").is_ok() {
                 ready = true;
             }
@@ -99,7 +102,7 @@ async fn main() {
             let num = selection.parse::<i32>().expect("Failed to parse selection");
 
             if num == 1 {
-                run_launch_file(os).await;
+                run_launch_file(&os).await;
                 continue
             } else if num == 2 {
                 change_ram();
@@ -161,7 +164,7 @@ async fn main() {
 
         println!("Using Java {}", java_version);
 
-        download_java(&client, java_install_path.as_str(), java_path.as_str(), config.get_java_download(java_key, java_version).unwrap().as_str())
+        download_java(&client, java_install_path.as_str(), java_path.as_str(), config.get_java_download(java_key, java_version).unwrap().as_str(), &os)
             .await
             .expect("Failed to download Java");
 
@@ -191,7 +194,7 @@ async fn main() {
         println!();
 
         if num != 5 {
-            create_launch_script(Some(java_path.as_str()), java_version, os, 3);
+            create_launch_script(Some(java_path.as_str()), java_version, &os, 3);
         } else {
             create_args_file(3);
         }
@@ -206,7 +209,7 @@ async fn main() {
         print!("Would you like to run your server now? (y/n): ");
 
         if yes_or_no() {
-            run_launch_file(os).await;
+            run_launch_file(&os).await;
         } else {
             goodbye();
             wait_for_enter("exit");
@@ -247,11 +250,11 @@ fn yes_or_no() -> bool {
     input == "y"
 }
 
-fn create_launch_script(java_path: Option<&str>, java_version: i32, os: &str, ram: i32) {
+fn create_launch_script(java_path: Option<&str>, java_version: i32, os: &OS, ram: i32) {
     println!("Creating launch script...");
     create_args_file(ram);
 
-    let file_name = if os == "windows" {
+    let file_name = if os == &OS::Windows {
         "./launch.bat"
     } else {
         "./launch.sh"
@@ -286,7 +289,7 @@ fn create_launch_script(java_path: Option<&str>, java_version: i32, os: &str, ra
             let file = File::create(file_name).unwrap();
             let mut file = BufWriter::new(file);
 
-            if os == "windows" {
+            if os == &OS::Windows {
                 file.write_all(
                     format!(
                         "@echo off\n\"{}\" {} -jar server.jar",
@@ -322,7 +325,7 @@ fn create_launch_script(java_path: Option<&str>, java_version: i32, os: &str, ra
         }
     }
 
-    if os != "windows" {
+    if os != &OS::Windows {
         Command::new("chmod")
             .arg("+x")
             .arg("./launch.sh")
@@ -378,8 +381,8 @@ async fn accept_eula() {
     file.write_all("eula=true".as_bytes()).unwrap();
 }
 
-fn extract(file: &File, path: &str) {
-    if cfg!(target_os = "windows") {
+fn extract(file: &File, path: &str, os: &OS) {
+    if os == &OS::Windows {
         let mut archive = zip::ZipArchive::new(file).expect("Failed to create ZipArchive");
         archive.extract(path).expect("Failed to extract Java file");
     } else {
@@ -405,12 +408,12 @@ fn wait_for_enter(message: &str) {
     let _ = stdin().read_line(&mut String::new());
 }
 
-async fn run_launch_file(os: &str) {
+async fn run_launch_file(os: &OS) {
     println!("Starting server...");
 
     let mut content = String::new();
 
-    if os == "windows" {
+    if os == &OS::Windows {
         File::open("./launch.bat").expect("Failed to open launch.bat").read_to_string(&mut content).expect("Failed to read launch.bat");
     } else {
         File::open("./launch.sh").expect("Failed to open launch.sh").read_to_string(&mut content).expect("Failed to read launch.sh");
