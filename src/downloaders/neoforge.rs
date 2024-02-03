@@ -1,15 +1,17 @@
 use std::fs::File;
 use std::io::Read;
+use async_trait::async_trait;
 use serde_json::Value;
 use tokio::fs;
 use xml2json_rs::JsonBuilder;
-use crate::downloader::Downloader;
+use crate::downloader::Installer;
 use crate::servertype::ServerType;
 use crate::servertype::ServerType::Server;
 
 pub(crate) struct NeoForge {}
 
-impl Downloader for NeoForge {
+#[async_trait]
+impl Installer for NeoForge {
     fn get_name(&self) -> String {
         "NeoForge".to_string()
     }
@@ -22,7 +24,11 @@ impl Downloader for NeoForge {
         Server
     }
 
-    async fn install(client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
+    async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {
+        crate::downloader::basic_server_address_from_string(string).await
+    }
+
+    async fn download(&self, client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
         let neo_version = get_neoforge_version(minecraft_version).await.expect("Failed to get latest NeoForge version");
 
         println!("Using NeoForge version {}.", neo_version);
@@ -38,11 +44,7 @@ impl Downloader for NeoForge {
         Ok(neo_version)
     }
 
-    async fn startup_message(string: &String) -> Option<std::net::SocketAddrV4> {
-        crate::downloader::basic_server_address_from_string(string).await
-    }
-    
-    async fn build(java_path: String, mut minecraft_version: Option<String>) {
+    async fn build(&self, java_path: String, mut minecraft_version: Option<String>) {
         let mut command = std::process::Command::new(java_path.clone());
 
         if minecraft_version.is_none() {

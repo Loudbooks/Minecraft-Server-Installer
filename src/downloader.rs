@@ -6,21 +6,23 @@ use std::fs::File;
 use std::io::Write;
 use std::net::{Ipv4Addr, SocketAddrV4};
 use std::str::FromStr;
+use async_trait::async_trait;
 use public_ip::addr;
 use crate::downloaderror::DownloadError;
 use crate::servertype::ServerType;
 
-pub trait Downloader {
+#[async_trait]
+pub trait Installer: Sync {
     fn get_name(&self) -> String;
     fn get_description(&self) -> String;
     fn get_type(&self) -> ServerType;
 
-    async fn install(&self, client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> where Self: Sized;
-    async fn startup_message(&self, string: &String) -> Option<SocketAddrV4> where Self: Sized;
-    async fn build(&self, _java_path: String, _minecraft_version: Option<String>) where Self: Sized {}
+    async fn startup_message(&self, string: String) -> Option<SocketAddrV4>;
+    async fn download(&self, client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError>;
+    async fn build(&self, _java_path: String, _minecraft_version: Option<String>) {}
 }
 
-pub async fn basic_server_address_from_string(string: &String) -> Option<SocketAddrV4> {
+pub async fn basic_server_address_from_string(string: String) -> Option<SocketAddrV4> {
     if string.contains("Starting Minecraft server on *:") {
         let parsed_port = string.split("*:").collect::<Vec<&str>>()[1].parse::<u16>().expect("Failed to parse port");
         println!("Port successfully parsed: {}", parsed_port);
@@ -33,7 +35,7 @@ pub async fn basic_server_address_from_string(string: &String) -> Option<SocketA
     None
 }
 
-pub async fn basic_proxy_address_from_string(string: &String) -> Option<SocketAddrV4> {
+pub async fn basic_proxy_address_from_string(string: String) -> Option<SocketAddrV4> {
     if string.contains("Listening on /") {
         let ip = string.split('/').collect::<Vec<&str>>()[1];
         let port = ip.split(':').collect::<Vec<&str>>()[1].parse::<u32>().ok();

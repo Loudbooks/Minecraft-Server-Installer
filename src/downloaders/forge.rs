@@ -3,17 +3,19 @@ use std::fs;
 use std::fs::File;
 use std::net::SocketAddrV4;
 use std::process::Command;
+use async_trait::async_trait;
 use reqwest::Client;
 use semver::Version;
 use serde_json::Value;
-use crate::downloader::{basic_server_address_from_string, Downloader};
+use crate::downloader::{basic_server_address_from_string, Installer};
 use crate::downloaderror::DownloadError;
 use crate::servertype::ServerType;
 use crate::servertype::ServerType::Server;
 
 pub(crate) struct Forge {}
 
-impl Downloader for Forge {
+#[async_trait]
+impl Installer for Forge {
     fn get_name(&self) -> String {
         "Forge".to_string()
     }
@@ -26,7 +28,11 @@ impl Downloader for Forge {
         Server
     }
 
-    async fn install(client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
+    async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
+        basic_server_address_from_string(string).await
+    }
+
+    async fn download(&self, client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let forge_version = get_forge_build(minecraft_version.clone()).await.expect("Failed to get latest forge version");
 
         if minecraft_version.is_none() {
@@ -65,11 +71,7 @@ impl Downloader for Forge {
         Ok(minecraft_version.clone().expect("Failed to get minecraft version").to_string())
     }
 
-    async fn startup_message(string: &String) -> Option<SocketAddrV4> {
-        basic_server_address_from_string(string).await
-    }
-    
-    async fn build(java_path: String, mut minecraft_version: Option<String>) {
+    async fn build(&self, java_path: String, mut minecraft_version: Option<String>) {
         let mut command = Command::new(java_path);
 
         if minecraft_version.is_none() {

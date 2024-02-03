@@ -12,12 +12,12 @@ use reqwest::Client;
 use std::{env, fs, panic};
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, stdin, stdout, Write};
+use std::path::Path;
 use std::process::{Command, exit, Stdio};
 use tar::Archive;
-use crate::downloader::Downloader;
+use crate::downloader::Installer;
 use crate::downloaders::fabric::Fabric;
 use crate::downloaders::bungeecord::BungeeCord;
-use crate::downloaders::{forge, neoforge};
 use crate::downloaders::forge::Forge;
 use crate::downloaders::java::download_java;
 use crate::downloaders::neoforge::NeoForge;
@@ -30,7 +30,7 @@ use crate::servertype::ServerType::{Proxy, Server};
 async fn main() {
     prepare_hook();
 
-    let downloaders: Vec<Box<dyn Downloader>> = vec![
+    let downloaders: Vec<Box<dyn Installer>> = vec![
         Box::new(Vanilla {}),
         Box::new(Paper {}),
         Box::new(Fabric {}),
@@ -52,17 +52,17 @@ async fn main() {
 
     let config = config::ConfigFile {
         path: if os == OS::Windows {
-            env::var("APPDATA").expect("Failed to retrieve APPDATA variable") + "\\MinecraftServerInstaller"
+            env::var("APPDATA").unwrap_or("./".to_string()) + "\\MinecraftServerInstaller"
         } else if os == OS::Linux {
-            env::var("XDG_CONFIG_HOME").expect("Failed to retrieve XDG_CONFIG_HOME variable") + "/MinecraftServerInstaller"
+            env::var("XDG_CONFIG_HOME").unwrap_or("./".to_string()) + "/MinecraftServerInstaller"
         } else {
-            env::var("HOME").expect("Failed to retrieve HOME variable") + "/Library/Application Support/MinecraftServerInstaller"
+            env::var("HOME").unwrap_or("./".to_string()) + "/Library/Application Support/MinecraftServerInstaller"
         }
     };
 
-    if !std::path::Path::new(&(config.path.to_string() + "/msi-config.toml")).exists() {
-        if !std::path::Path::new(&config.path).exists() {
-            fs::create_dir(&config.path).expect("Failed to create config directory");
+    if !Path::new(&(config.path.to_string() + "/msi-config.toml")).exists() {
+        if !Path::new(&config.path).exists() {
+            fs::create_dir_all(&config.path).expect("Failed to create config directory");
         }
 
         config.create();
@@ -137,14 +137,14 @@ async fn main() {
 
         println!("What kind of server do you want to run?");
         println!("Servers:" );
-        let server_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Server).collect::<Vec<&Box<dyn Downloader>>>();
+        let server_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Server).collect::<Vec<&Box<dyn Installer>>>();
         for (mut index, downloader) in server_downloaders.iter().enumerate() {
             index += 1;
             println!("  {}. {} - {}", index, downloader.get_name(), downloader.get_description());
         }
 
         println!("Proxies:");
-        let proxy_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Proxy).collect::<Vec<&Box<dyn Downloader>>>();
+        let proxy_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Proxy).collect::<Vec<&Box<dyn Installer>>>();
         for (mut index, downloader) in proxy_downloaders.iter().enumerate() {
             index += 1;
             println!("  {}. {} - {}", index + server_downloaders.len(), downloader.get_name(), downloader.get_description());
@@ -197,7 +197,7 @@ async fn main() {
 
         println!("Beginning server download...");
 
-        server_object.install(client.clone(), minecraft_version.clone()).await.expect("Failed to download server");
+        server_object.download(client.clone(), minecraft_version.clone()).await.expect("Failed to download server");
         server_object.build(java_path.clone(), minecraft_version.clone()).await;
         
         accept_eula().await;

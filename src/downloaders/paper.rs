@@ -1,14 +1,17 @@
+
 use std::error::Error;
 use std::net::SocketAddrV4;
+use async_trait::async_trait;
 use reqwest::Client;
-use crate::downloader::{basic_server_address_from_string, download_file, Downloader};
+use crate::downloader::{basic_server_address_from_string, download_file, Installer};
 use crate::downloaderror::DownloadError;
 use crate::servertype::ServerType;
 use crate::servertype::ServerType::Server;
 
 pub(crate) struct Paper {}
 
-impl Downloader for Paper {
+#[async_trait]
+impl Installer for Paper {
     fn get_name(&self) -> String {
         "Paper".to_string()
     }
@@ -21,7 +24,11 @@ impl Downloader for Paper {
         Server
     }
 
-    async fn install(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
+    async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
+        basic_server_address_from_string(string).await
+    }
+
+    async fn download(&self, client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let paper_version = get_latest_paper_version(minecraft_version).await.expect("Failed to get latest paper version");
         let latest_build = get_latest_build(&paper_version).await.expect("Failed to get latest paper build");
 
@@ -40,10 +47,6 @@ impl Downloader for Paper {
         download_file(&client, &url, "./server.jar").await?;
 
         Ok(paper_version)
-    }
-
-    async fn startup_message(string: &String) -> Option<SocketAddrV4> {
-        basic_server_address_from_string(string).await
     }
 }
 
