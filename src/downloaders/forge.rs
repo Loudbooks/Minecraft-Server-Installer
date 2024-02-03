@@ -1,17 +1,32 @@
 use std::error::Error;
 use std::fs;
 use std::fs::File;
+use std::net::SocketAddrV4;
 use std::process::Command;
 use reqwest::Client;
 use semver::Version;
 use serde_json::Value;
-use crate::downloader::Downloader;
+use crate::downloader::{basic_server_address_from_string, Downloader};
 use crate::downloaderror::DownloadError;
+use crate::servertype::ServerType;
+use crate::servertype::ServerType::Server;
 
 pub(crate) struct Forge {}
 
 impl Downloader for Forge {
-    async fn download(client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
+    fn get_name(&self) -> String {
+        "Forge".to_string()
+    }
+
+    fn get_description(&self) -> String {
+        "A server that supports Forge mods.".to_string()
+    }
+
+    fn get_type(&self) -> ServerType {
+        Server
+    }
+
+    async fn install(client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let forge_version = get_forge_build(minecraft_version.clone()).await.expect("Failed to get latest forge version");
 
         if minecraft_version.is_none() {
@@ -49,54 +64,58 @@ impl Downloader for Forge {
 
         Ok(minecraft_version.clone().expect("Failed to get minecraft version").to_string())
     }
-}
 
-pub async fn build_server(java_path: String, mut minecraft_version: Option<String>) {
-    let mut command = Command::new(java_path);
-
-    if minecraft_version.is_none() {
-        minecraft_version = Some(get_latest_forge_version().await.expect("Failed to get latest forge version"));
+    async fn startup_message(string: &String) -> Option<SocketAddrV4> {
+        basic_server_address_from_string(string).await
     }
+    
+    async fn build(java_path: String, mut minecraft_version: Option<String>) {
+        let mut command = Command::new(java_path);
 
-    if fs::metadata("forge.jar").unwrap().len() < 1000 {
-        fs::remove_file("forge.jar").expect("Failed to remove forge jar");
-        panic!("Forge version not found.");
+        if minecraft_version.is_none() {
+            minecraft_version = Some(get_latest_forge_version().await.expect("Failed to get latest forge version"));
+        }
+
+        if fs::metadata("forge.jar").unwrap().len() < 1000 {
+            fs::remove_file("forge.jar").expect("Failed to remove forge jar");
+            panic!("Forge version not found.");
+        }
+
+        let mut process = command
+            .arg("-jar")
+            .arg("forge.jar")
+            .arg("--installServer")
+            .arg(".")
+            .spawn()
+            .expect("Failed to build server");
+
+        process.wait().expect("Failed to build server");
+
+        let forge_version = get_forge_build(minecraft_version.clone()).await.expect("Failed to get latest forge version");
+        let minecraft_version = minecraft_version.unwrap();
+
+        println!("Building server with Forge version {}. This will take a while...", minecraft_version);
+
+        let mut file_name = format!("./forge-{}-{}-shim.jar", minecraft_version, forge_version);
+
+        if File::open(&file_name).is_err() {
+            file_name = format!("./minecraftforge-universal-{}-{}.jar", minecraft_version, forge_version); // Forge has a seemingly random naming scheme
+        }                                                                                                  // so we have to try a few different names
+        if File::open(&file_name).is_err() {                                                               // but actually, wtf forge.
+            file_name = format!("./forge-{}-{}.jar", minecraft_version, forge_version);
+        }
+        if File::open(&file_name).is_err() {
+            file_name = format!("./forge-{}-{}-{}-universal.jar", minecraft_version, forge_version, minecraft_version);
+        }
+        if File::open(&file_name).is_err() {
+            file_name = format!("./forge-{}-{}-universal.jar", minecraft_version, forge_version);
+        }
+
+        println!("Renaming server {} to server.jar...", file_name);
+
+        fs::rename(format!("./{}", file_name), "./server.jar").expect("Failed to rename server file");
+        fs::remove_file("./forge.jar").expect("Failed to delete forge file");
     }
-
-    let mut process = command
-        .arg("-jar")
-        .arg("forge.jar")
-        .arg("--installServer")
-        .arg(".")
-        .spawn()
-        .expect("Failed to build server");
-
-    process.wait().expect("Failed to build server");
-
-    let forge_version = get_forge_build(minecraft_version.clone()).await.expect("Failed to get latest forge version");
-    let minecraft_version = minecraft_version.unwrap();
-
-    println!("Building server with Forge version {}. This will take a while...", minecraft_version);
-
-    let mut file_name = format!("./forge-{}-{}-shim.jar", minecraft_version, forge_version);
-
-    if File::open(&file_name).is_err() {
-        file_name = format!("./minecraftforge-universal-{}-{}.jar", minecraft_version, forge_version); // Forge has a seemingly random naming scheme
-    }                                                                                                  // so we have to try a few different names
-    if File::open(&file_name).is_err() {                                                               // but actually, wtf forge.
-        file_name = format!("./forge-{}-{}.jar", minecraft_version, forge_version);
-    }
-    if File::open(&file_name).is_err() {
-        file_name = format!("./forge-{}-{}-{}-universal.jar", minecraft_version, forge_version, minecraft_version);
-    }
-    if File::open(&file_name).is_err() {
-        file_name = format!("./forge-{}-{}-universal.jar", minecraft_version, forge_version);
-    }
-
-    println!("Renaming server {} to server.jar...", file_name);
-
-    fs::rename(format!("./{}", file_name), "./server.jar").expect("Failed to rename server file");
-    fs::remove_file("./forge.jar").expect("Failed to delete forge file");
 }
 
 async fn get_forge_build(minecraft_version: Option<String>) -> Result<String, Box<dyn Error>> {

@@ -4,3 +4,4 @@ pub(crate) mod paper;
 pub(crate) mod vanilla;
 pub(crate) mod forge;
 pub(crate) mod neoforge;
+pub(crate) mod bungeecord;

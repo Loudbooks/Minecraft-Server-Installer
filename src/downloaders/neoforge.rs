@@ -4,11 +4,25 @@ use serde_json::Value;
 use tokio::fs;
 use xml2json_rs::JsonBuilder;
 use crate::downloader::Downloader;
+use crate::servertype::ServerType;
+use crate::servertype::ServerType::Server;
 
 pub(crate) struct NeoForge {}
 
 impl Downloader for NeoForge {
-    async fn download(client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
+    fn get_name(&self) -> String {
+        "NeoForge".to_string()
+    }
+
+    fn get_description(&self) -> String {
+        "A server that supports NeoForge mods.".to_string()
+    }
+
+    fn get_type(&self) -> ServerType {
+        Server
+    }
+
+    async fn install(client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
         let neo_version = get_neoforge_version(minecraft_version).await.expect("Failed to get latest NeoForge version");
 
         println!("Using NeoForge version {}.", neo_version);
@@ -23,48 +37,52 @@ impl Downloader for NeoForge {
 
         Ok(neo_version)
     }
-}
 
-pub async fn build_server(java_path: String, mut minecraft_version: Option<String>) {
-    let mut command = std::process::Command::new(java_path.clone());
-
-    if minecraft_version.is_none() {
-        minecraft_version = Some(get_neoforge_version(None).await.expect("Failed to get latest forge version"));
-    } else {
-        minecraft_version = Some(get_neoforge_version(minecraft_version).await.expect("Failed to get latest forge version"));
+    async fn startup_message(string: &String) -> Option<std::net::SocketAddrV4> {
+        crate::downloader::basic_server_address_from_string(string).await
     }
+    
+    async fn build(java_path: String, mut minecraft_version: Option<String>) {
+        let mut command = std::process::Command::new(java_path.clone());
 
-    let mut process = command
-        .arg("-jar")
-        .arg("neoforge.jar")
-        .arg("--installServer")
-        .spawn()
-        .expect("Failed to build server");
+        if minecraft_version.is_none() {
+            minecraft_version = Some(get_neoforge_version(None).await.expect("Failed to get latest forge version"));
+        } else {
+            minecraft_version = Some(get_neoforge_version(minecraft_version).await.expect("Failed to get latest forge version"));
+        }
 
-    println!("Building server with NeoForge version {}. This will take a while...", minecraft_version.clone().unwrap_or("".to_string()));
+        let mut process = command
+            .arg("-jar")
+            .arg("neoforge.jar")
+            .arg("--installServer")
+            .spawn()
+            .expect("Failed to build server");
 
-    process.wait().expect("Failed to build server");
+        println!("Building server with NeoForge version {}. This will take a while...", minecraft_version.clone().unwrap_or("".to_string()));
 
-    fs::remove_file("neoforge.jar").await.expect("Failed to remove NeoForge jar");
-    fs::rename("run.sh", "launch.sh").await.expect("Failed to rename run.sh to launch.sh");
+        process.wait().expect("Failed to build server");
 
-    let mut content = String::new();
+        fs::remove_file("neoforge.jar").await.expect("Failed to remove NeoForge jar");
+        fs::rename("run.sh", "launch.sh").await.expect("Failed to rename run.sh to launch.sh");
 
-    File::open("launch.sh").expect("Failed to open launch.sh").read_to_string(&mut content).expect("Failed to read launch.sh");
-    let new_content = content.replace("java", format!("\"{}\"", java_path.as_str()).as_str());
-    fs::write("launch.sh", new_content).await.expect("Failed to write to launch.sh");
+        let mut content = String::new();
 
-    fs::rename("run.bat", "launch.bat").await.expect("Failed to rename run.sh to launch.sh");
+        File::open("launch.sh").expect("Failed to open launch.sh").read_to_string(&mut content).expect("Failed to read launch.sh");
+        let new_content = content.replace("java", format!("\"{}\"", java_path.as_str()).as_str());
+        fs::write("launch.sh", new_content).await.expect("Failed to write to launch.sh");
 
-    let mut content = String::new();
+        fs::rename("run.bat", "launch.bat").await.expect("Failed to rename run.sh to launch.sh");
 
-    File::open("launch.bat").expect("Failed to open launch.bat").read_to_string(&mut content).expect("Failed to read launch.bat");
-    let new_content = content.replace("java", format!("\"{}\"", java_path.as_str()).as_str());
-    fs::write("launch.bat", new_content).await.expect("Failed to write to launch.bat");
+        let mut content = String::new();
 
-    fs::remove_file("user_jvm_args.txt").await.expect("Failed to remove user_jvm_args.txt");
+        File::open("launch.bat").expect("Failed to open launch.bat").read_to_string(&mut content).expect("Failed to read launch.bat");
+        let new_content = content.replace("java", format!("\"{}\"", java_path.as_str()).as_str());
+        fs::write("launch.bat", new_content).await.expect("Failed to write to launch.bat");
 
-    println!("Server built successfully!");
+        fs::remove_file("user_jvm_args.txt").await.expect("Failed to remove user_jvm_args.txt");
+
+        println!("Server built successfully!");
+    }
 }
 
 async fn get_version_array() -> Vec<Value> {

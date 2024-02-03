@@ -1,12 +1,27 @@
 use reqwest::Client;
 use std::error::Error;
-use crate::downloader::{download_file, Downloader};
+use std::net::SocketAddrV4;
+use crate::downloader::{basic_server_address_from_string, download_file, Downloader};
 use crate::downloaderror::DownloadError;
+use crate::servertype::ServerType;
+use crate::servertype::ServerType::Server;
 
 pub(crate) struct Fabric {}
 
 impl Downloader for Fabric {
-    async fn download(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
+    fn get_name(&self) -> String {
+        "Fabric".to_string()
+    }
+
+    fn get_description(&self) -> String {
+        "A server that supports Fabric mods.".to_string()
+    }
+
+    fn get_type(&self) -> ServerType {
+        Server
+    }
+
+    async fn install(client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let fabric_version = get_latest_fabric_version(&minecraft_version).await.expect("Failed to get latest fabric version");
         let fabric_build = get_fabric_build().await.expect("Failed to get latest fabric build");
 
@@ -23,6 +38,10 @@ impl Downloader for Fabric {
         download_file(&client, &url, "./server.jar").await?;
 
         Ok(fabric_version.to_string())
+    }
+
+    async fn startup_message(string: &String) -> Option<SocketAddrV4> {
+        basic_server_address_from_string(string).await
     }
 }
 

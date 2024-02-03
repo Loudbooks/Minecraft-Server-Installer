@@ -81,7 +81,6 @@ impl ConfigFile {
 
             self.create();
         }
-
     }
 
     pub fn get_java_download(&self, key: String, version: i32) -> Option<String> {
@@ -117,13 +116,13 @@ impl ConfigFile {
         return Some(java_version_thresholds.get(key).expect("Failed to get java_version key").as_str().expect("Failed to get java_version as string").to_string());
     }
 
-    pub async fn get_java_version(&self, minecraft_version: String) -> Option<i32> {
+    pub async fn get_java_version(&self, minecraft_version: Option<String>) -> Option<i32> {
         let version_index = downloader::version_index(minecraft_version).await.expect("Failed to get version index");
-        let java_17_index = downloader::version_index(self.get_java_version_threshold("java_17".to_string())
-            .or(Some(self.default_config().java_version_thresholds.java_17.to_string())).expect("Failed to get default version for Java 17"))
+        let java_17_index = downloader::version_index(Some(self.get_java_version_threshold("java_17".to_string()))
+            .or(Some(Some(self.default_config().java_version_thresholds.java_17.to_string()))).expect("Failed to get default version for Java 17"))
             .await.expect("Failed to get version index for Java 17");
-        let java_16_index = downloader::version_index(self.get_java_version_threshold("java_16".to_string())
-            .or(Some(self.default_config().java_version_thresholds.java_16.to_string())).expect("Failed to get default version for Java 16"))
+        let java_16_index = downloader::version_index(Some(self.get_java_version_threshold("java_16".to_string()))
+            .or(Some(Some(self.default_config().java_version_thresholds.java_16.to_string()))).expect("Failed to get default version for Java 16"))
             .await.expect("Failed to get version index for Java 16");
 
         if version_index >= java_17_index {

@@ -5,6 +5,7 @@ pub mod config;
 pub mod downloader;
 pub mod downloaderror;
 pub mod os;
+mod servertype;
 
 use flate2::read::GzDecoder;
 use reqwest::Client;
@@ -15,6 +16,7 @@ use std::process::{Command, exit, Stdio};
 use tar::Archive;
 use crate::downloader::Downloader;
 use crate::downloaders::fabric::Fabric;
+use crate::downloaders::bungeecord::BungeeCord;
 use crate::downloaders::{forge, neoforge};
 use crate::downloaders::forge::Forge;
 use crate::downloaders::java::download_java;
@@ -22,10 +24,20 @@ use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
 use crate::downloaders::vanilla::Vanilla;
 use crate::os::OS;
+use crate::servertype::ServerType::{Proxy, Server};
 
 #[tokio::main]
 async fn main() {
     prepare_hook();
+
+    let downloaders: Vec<Box<dyn Downloader>> = vec![
+        Box::new(Vanilla {}),
+        Box::new(Paper {}),
+        Box::new(Fabric {}),
+        Box::new(Forge {}),
+        Box::new(NeoForge {}),
+        Box::new(BungeeCord {})
+    ];
 
     let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");
     let os = if cfg!(target_os = "macos") {
@@ -124,18 +136,28 @@ async fn main() {
         let client = Client::new();
 
         println!("What kind of server do you want to run?");
-        println!("1. Vanilla - The original Minecraft server. No plugins or mods.");
-        println!("2. Paper - A Minecraft server with plugins.");
-        println!("3. Fabric - A Minecraft server with Fabric mods.");
-        println!("4. Forge - A Minecraft server with Forge mods.");
-        println!("5. NeoForge - A Minecraft server with NeoForge mods.");
+        println!("Servers:" );
+        let server_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Server).collect::<Vec<&Box<dyn Downloader>>>();
+        for (mut index, downloader) in server_downloaders.iter().enumerate() {
+            index += 1;
+            println!("  {}. {} - {}", index, downloader.get_name(), downloader.get_description());
+        }
+
+        println!("Proxies:");
+        let proxy_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Proxy).collect::<Vec<&Box<dyn Downloader>>>();
+        for (mut index, downloader) in proxy_downloaders.iter().enumerate() {
+            index += 1;
+            println!("  {}. {} - {}", index + server_downloaders.len(), downloader.get_name(), downloader.get_description());
+        }
+
         println!();
-        print!("Enter the number of the server you want to run: (1-5): ");
+        print!("Enter the number of the server you want to run: (1-6): ");
 
         let mut server_type = user_input();
+        let total_types: i32 = downloaders.len() as i32;
 
         while match server_type.parse::<i32>() {
-            Ok(value) => !(1..=5).contains(&value),
+            Ok(value) => !(1..=total_types).contains(&value),
             Err(_) => true,
         } {
             print!("Please enter a valid number: ");
@@ -143,16 +165,21 @@ async fn main() {
         }
 
         let num = server_type.parse::<i32>().expect("Failed to parse server type");
+        let server_object = downloaders.get((num - 1) as usize).expect("Failed to get server object");
 
         println!();
         print!("What version of Minecraft do you want to run? Type latest for the latest version: ");
 
-        let minecraft_version = user_input();
+        let minecraft_version = if server_object.get_type() == Server {
+            let input = user_input();
 
-        let version_option = if minecraft_version == "latest" {
-            None
+            if input == "latest" {
+                None
+            } else {
+                Some(input)
+            }
         } else {
-            Some(minecraft_version.clone())
+            None
         };
 
         println!("Beginning download...");
@@ -169,25 +196,9 @@ async fn main() {
             .expect("Failed to download Java");
 
         println!("Beginning server download...");
-        if num == 1 {
-            Vanilla::download(client.clone(), version_option)
-                .await
-                .expect("Failed to download Vanilla");
-        } else if num == 2 {
-            Paper::download(client.clone(), version_option)
-                .await
-                .expect("Failed to download Paper");
-        } else if num == 3 {
-            Fabric::download(client.clone(), version_option)
-                .await
-                .expect("Failed to download Fabric");
-        } else if num == 4 {
-            Forge::download(client.clone(), version_option.clone()).await.expect("Failed to download Forge");
-            forge::build_server(java_path.clone(), version_option).await;
-        } else if num == 5 {
-            NeoForge::download(client.clone(), version_option.clone()).await.expect("Failed to download NeoForge");
-            neoforge::build_server(java_path.clone(), version_option).await;
-        }
+
+        server_object.install(client.clone(), minecraft_version.clone()).await.expect("Failed to download server");
+        server_object.build(java_path.clone(), minecraft_version.clone()).await;
         
         accept_eula().await;
 
@@ -450,7 +461,14 @@ async fn run_launch_file(os: &OS) {
                 port = Some(parsed_port);
             }
 
-            if line.contains("Done (") {
+            if line.contains("Done (") || line.contains("Listening on /") {
+
+                if line.contains("Listening on /") {
+                    let ip = line.split('/').collect::<Vec<&str>>()[1];
+
+                    port = ip.split(':').collect::<Vec<&str>>()[1].parse::<u32>().ok();
+                }
+
                 println!();
                 println!("Server is ready!");
                 println!("To safely stop the server, type 'stop' and press enter.");
