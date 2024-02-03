@@ -24,6 +24,10 @@ impl Installer for Paper {
         Server
     }
 
+    fn custom_script(&self) -> bool {
+        false
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_server_address_from_string(string).await
     }

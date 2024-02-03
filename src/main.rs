@@ -12,6 +12,8 @@ use reqwest::Client;
 use std::{env, fs, panic};
 use std::fs::File;
 use std::io::{BufRead, BufReader, BufWriter, Read, stdin, stdout, Write};
+use std::net::SocketAddrV4;
+use std::ops::{Deref};
 use std::path::Path;
 use std::process::{Command, exit, Stdio};
 use tar::Archive;
@@ -92,7 +94,13 @@ async fn main() {
             ready = true;
         }
 
+        if get_selected_from_cache(&downloaders).is_none() {
+            ready = false;
+        }
+
         if ready {
+            let server_object = get_selected_from_cache(&downloaders).unwrap();
+
             println!("A valid server file was found.");
             println!("1. Run the server.");
             println!("2. Change amount of RAM allocated to the server.");
@@ -114,7 +122,7 @@ async fn main() {
             let num = selection.parse::<i32>().expect("Failed to parse selection");
 
             if num == 1 {
-                run_launch_file(&os).await;
+                run_launch_file(&os, server_object).await;
                 continue
             } else if num == 2 {
                 change_ram();
@@ -202,13 +210,13 @@ async fn main() {
         
         accept_eula().await;
 
-        println!();
-
-        if num != 5 {
-            create_launch_script(Some(java_path.as_str()), java_version, &os, 3);
-        } else {
+        if server_object.custom_script() {
             create_args_file(3);
+        } else {
+            create_launch_script(Some(java_path.as_str()), java_version, &os, 3);
         }
+
+        save_selected_cache(server_object.deref());
 
         println!();
         println!("Your server is ready to go!");
@@ -220,7 +228,7 @@ async fn main() {
         print!("Would you like to run your server now? (y/n): ");
 
         if yes_or_no() {
-            run_launch_file(&os).await;
+            run_launch_file(&os, server_object.deref()).await;
         } else {
             goodbye();
             wait_for_enter("exit");
@@ -419,7 +427,7 @@ fn wait_for_enter(message: &str) {
     let _ = stdin().read_line(&mut String::new());
 }
 
-async fn run_launch_file(os: &OS) {
+async fn run_launch_file(os: &OS, server: &dyn Installer) {
     println!("Starting server...");
 
     let mut content = String::new();
@@ -447,40 +455,24 @@ async fn run_launch_file(os: &OS) {
         .expect("Failed to capture standard output");
     let reader = BufReader::new(out);
 
-    let mut port: Option<u32> = None;
+    let mut address: Option<SocketAddrV4> = None;
     for line in reader.lines() {
         let line = line;
 
         if let Ok(line) = line {
             println!("{}", line);
 
-            if line.contains("Starting Minecraft server on *:") {
-                let parsed_port = line.split("*:").collect::<Vec<&str>>()[1].parse::<u32>().expect("Failed to parse port");
-                println!("Port successfully parsed: {}", parsed_port);
-
-                port = Some(parsed_port);
+            if server.startup_message(line.clone()).await.is_some() {
+                address = server.startup_message(line.clone()).await;
             }
 
             if line.contains("Done (") || line.contains("Listening on /") {
-
-                if line.contains("Listening on /") {
-                    let ip = line.split('/').collect::<Vec<&str>>()[1];
-
-                    port = ip.split(':').collect::<Vec<&str>>()[1].parse::<u32>().ok();
-                }
-
                 println!();
                 println!("Server is ready!");
                 println!("To safely stop the server, type 'stop' and press enter.");
 
-                if port.is_some() {
-                    let ip = if port == Some(25565) {
-                        format!("{}", public_ip::addr().await.unwrap())
-                    } else {
-                        format!("{}:{}", public_ip::addr().await.unwrap(), port.unwrap())
-                    };
-
-                    println!("If you port forwarded your server, other people can join using the following IP: {}", ip);
+                if address.is_some() {
+                    println!("If you port forwarded your server, other people can join using the following IP: {}", address.unwrap());
                 }
 
                 println!();
@@ -545,4 +537,31 @@ fn user_input() -> String {
     }
 
     input
+}
+
+fn save_selected_cache(server: &dyn Installer) {
+    let file = File::create("./selected_cache.txt").expect("Failed to create selected_cache.txt");
+    let mut file = BufWriter::new(file);
+
+    file.write_all(server.get_name().as_bytes()).expect("Failed to write to selected_cache.txt");
+}
+
+fn get_selected_from_cache(options: &Vec<Box<dyn Installer>>) -> Option<&dyn Installer> {
+    let file = File::open("./selected_cache.txt");
+
+    if file.is_err() {
+        return None
+    }
+
+    let mut file = BufReader::new(file.unwrap());
+    let mut content = String::new();
+    file.read_to_string(&mut content).expect("Failed to read selected_cache.txt");
+
+    for installer in options {
+        if installer.get_name() == content {
+            return Some(installer.deref())
+        }
+    }
+
+    None
 }

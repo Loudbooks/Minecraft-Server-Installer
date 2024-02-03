@@ -24,6 +24,10 @@ impl Installer for NeoForge {
         Server
     }
 
+    fn custom_script(&self) -> bool {
+        true
+    }
+
     async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {
         crate::downloader::basic_server_address_from_string(string).await
     }
