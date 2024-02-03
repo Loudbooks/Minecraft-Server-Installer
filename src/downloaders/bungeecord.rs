@@ -23,6 +23,10 @@ impl Installer for BungeeCord {
         false
     }
 
+    fn version_required(&self) -> bool {
+        false
+    }
+
     async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {
         basic_proxy_address_from_string(string).await
     }

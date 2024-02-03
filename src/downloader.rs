@@ -17,6 +17,7 @@ pub trait Installer: Sync {
     fn get_description(&self) -> String;
     fn get_type(&self) -> ServerType;
     fn custom_script(&self) -> bool;
+    fn version_required(&self) -> bool { true }
 
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4>;
     async fn download(&self, client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError>;

@@ -26,6 +26,7 @@ use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
 use crate::downloaders::vanilla::Vanilla;
 use crate::downloaders::velocity::Velocity;
+use crate::downloaders::waterfall::Waterfall;
 use crate::os::OS;
 use crate::servertype::ServerType::{Proxy, Server};
 
@@ -40,7 +41,8 @@ async fn main() {
         Box::new(Forge {}),
         Box::new(NeoForge {}),
         Box::new(BungeeCord {}),
-        Box::new(Velocity {})
+        Box::new(Velocity {}),
+        Box::new(Waterfall {})
     ];
 
     let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");
@@ -161,7 +163,7 @@ async fn main() {
         }
 
         println!();
-        print!("Enter the number of the server you want to run: (1-6): ");
+        print!("Enter the number of the server you want to run: (1-{}): ", downloaders.len());
 
         let mut server_type = user_input();
         let total_types: i32 = downloaders.len() as i32;
@@ -180,7 +182,7 @@ async fn main() {
         println!();
         print!("What version of Minecraft do you want to run? Type latest for the latest version: ");
 
-        let minecraft_version = if server_object.get_type() == Server {
+        let minecraft_version = if server_object.version_required() {
             let input = user_input();
 
             if input == "latest" {
