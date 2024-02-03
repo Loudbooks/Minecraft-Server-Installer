@@ -19,3 +19,4 @@ serde = { version = "1.0.196", features = ["derive"] }
 public-ip = "0.2"
 semver = "1.0.21"
 xml2json-rs = "1.0.1"
+async-trait = "0.1.77"

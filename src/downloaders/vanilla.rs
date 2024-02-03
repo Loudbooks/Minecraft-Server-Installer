@@ -1,11 +1,34 @@
+use std::net::SocketAddrV4;
+use async_trait::async_trait;
 use reqwest::Client;
-use crate::downloader::{download_file, Downloader, get_latest_vanilla_version};
+use crate::downloader::{basic_server_address_from_string, download_file, Installer, get_latest_vanilla_version};
 use crate::downloaderror::DownloadError;
+use crate::servertype::ServerType;
+use crate::servertype::ServerType::Server;
 
 pub(crate) struct Vanilla {}
 
-impl Downloader for Vanilla {
-    async fn download(client: Client, mut minecraft_version: Option<String>) -> Result<String, DownloadError> {
+#[async_trait]
+impl Installer for Vanilla {
+    fn get_name(&self) -> String {
+        "Vanilla".to_string()
+    }
+
+    fn get_description(&self) -> String {
+        "A basic Vanilla server.".to_string()
+    }
+
+    fn get_type(&self) -> ServerType {
+        Server
+    }
+
+    async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
+        basic_server_address_from_string(string).await
+    }
+
+    async fn download(&self, client: Client, minecraft_version: Option<String>) -> Result<String, DownloadError> {
+        let mut minecraft_version = minecraft_version;
+
         println!("Downloading Vanilla server...");
 
         let manifest_url = "https://launchermeta.mojang.com/mc/game/version_manifest.json";
