@@ -25,6 +25,7 @@ use crate::downloaders::java::download_java;
 use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
 use crate::downloaders::vanilla::Vanilla;
+use crate::downloaders::velocity::Velocity;
 use crate::os::OS;
 use crate::servertype::ServerType::{Proxy, Server};
 
@@ -38,7 +39,8 @@ async fn main() {
         Box::new(Fabric {}),
         Box::new(Forge {}),
         Box::new(NeoForge {}),
-        Box::new(BungeeCord {})
+        Box::new(BungeeCord {}),
+        Box::new(Velocity {})
     ];
 
     let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");

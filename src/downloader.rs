@@ -28,7 +28,7 @@ pub async fn basic_server_address_from_string(string: String) -> Option<SocketAd
         let parsed_port = string.split("*:").collect::<Vec<&str>>()[1].parse::<u16>().expect("Failed to parse port");
         println!("Port successfully parsed: {}", parsed_port);
 
-        let ipv4: Ipv4Addr = Ipv4Addr::from_str(&*addr().await.expect("Failed to get public IP").to_string()).expect("Failed to parse IP");
+        let ipv4: Ipv4Addr = Ipv4Addr::from_str(&addr().await.expect("Failed to get public IP").to_string()).expect("Failed to parse IP");
 
         return Some(SocketAddrV4::new(ipv4, parsed_port));
     }
@@ -39,12 +39,15 @@ pub async fn basic_server_address_from_string(string: String) -> Option<SocketAd
 pub async fn basic_proxy_address_from_string(string: String) -> Option<SocketAddrV4> {
     if string.contains("Listening on /") {
         let ip = string.split('/').collect::<Vec<&str>>()[1];
-        let port = ip.split(':').collect::<Vec<&str>>()[1].parse::<u32>().ok();
-        let ip = ip.split(':').collect::<Vec<&str>>()[0];
+        let port = ip.split(':').collect::<Vec<&str>>().last().unwrap().parse::<u32>().ok();
+        let ip = &addr().await.expect("Failed to get public IP").to_string();
         let ip = Ipv4Addr::from_str(ip).ok();
 
-        if ip.is_some() && port.is_some() {
-            return Some(SocketAddrV4::new(ip.unwrap(), port.unwrap() as u16));
+        if let (Some(ip_value), Some(port_value)) = (ip, port) {
+            return Some(SocketAddrV4::new(ip_value, port_value as u16));
+        } else {
+            println!("Failed to parse IP and port from string: {}", string);
+            return None;
         }
     }
 
