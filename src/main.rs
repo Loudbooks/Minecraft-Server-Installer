@@ -21,6 +21,7 @@ use crate::downloader::Installer;
 use crate::downloaders::fabric::Fabric;
 use crate::downloaders::bungeecord::BungeeCord;
 use crate::downloaders::forge::Forge;
+use crate::downloaders::geyser::Geyser;
 use crate::downloaders::java::download_java;
 use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
@@ -40,9 +41,10 @@ async fn main() {
         Box::new(Fabric {}),
         Box::new(Forge {}),
         Box::new(NeoForge {}),
+        Box::new(Geyser {}),
         Box::new(BungeeCord {}),
         Box::new(Velocity {}),
-        Box::new(Waterfall {})
+        Box::new(Waterfall {}),
     ];
 
     let is_arm = env::consts::ARCH.contains("arch64") || env::consts::ARCH.contains("arm");
@@ -132,7 +134,7 @@ async fn main() {
                 change_ram();
                 continue
             } else if num == 3 {
-                change_port();
+                change_port(server_object);
                 continue
             } else if num == 4 && fs::remove_file("./server.jar").is_ok() {
                 println!("Server file was removed.");
@@ -179,10 +181,10 @@ async fn main() {
         let num = server_type.parse::<i32>().expect("Failed to parse server type");
         let server_object = downloaders.get((num - 1) as usize).expect("Failed to get server object");
 
-        println!();
-        print!("What version of Minecraft do you want to run? Type latest for the latest version: ");
-
         let minecraft_version = if server_object.version_required() {
+            println!();
+            print!("What version of Minecraft do you want to run? Type latest for the latest version: ");
+
             let input = user_input();
 
             if input == "latest" {
@@ -488,7 +490,118 @@ async fn run_launch_file(os: &OS, server: &dyn Installer) {
     wait_for_enter("continue");
 }
 
-fn change_port() {
+fn change_port(server: &dyn Installer) {
+    if server.get_name() == "Geyser" {
+        let config = fs::read_to_string("./config.yml").expect("config.yml not found. Make sure you have run the server at least once!");
+        let config = config.split('\n').collect::<Vec<&str>>();
+
+        let mut new_config: Vec<String> = Vec::new();
+
+        let mut section = "Bedrock";
+
+        for line in config {
+            if line.starts_with("  port:") {
+                print!("Enter the new port you want to use for {}: ", section);
+
+                let mut new_port = user_input();
+
+                while new_port.parse::<i32>().is_err() || new_port.parse::<i32>().unwrap() < 1 || new_port.parse::<i32>().unwrap() > 65535 {
+                    print!("Please enter a valid port: ");
+                    new_port = user_input();
+                }
+
+                let host_string = format!("  port: {}", new_port);
+                let final_string = host_string;
+
+                new_config.push(final_string);
+
+                section = "Java";
+            } else {
+                new_config.push(line.to_string());
+            }
+        }
+
+        let file = File::create("./config.yml").expect("Failed to create config.yml");
+        let mut file = BufWriter::new(file);
+
+        for mut line in new_config {
+            line += "\n";
+            file.write_all(line.as_bytes()).expect("Failed to write to config.yml");
+        }
+
+        return
+    } else if server.get_name() == "BungeeCord" || server.get_name() == "Waterfall" {
+        let config = fs::read_to_string("./config.yml").expect("config.yml not found. Make sure you have run the server at least once!");
+        let config = config.split('\n').collect::<Vec<&str>>();
+
+        let mut new_config: Vec<String> = Vec::new();
+
+        print!("Enter the new port you want to use: ");
+
+        let mut new_port = user_input();
+
+        while new_port.parse::<i32>().is_err() || new_port.parse::<i32>().unwrap() < 1 || new_port.parse::<i32>().unwrap() > 65535 {
+            print!("Please enter a valid port: ");
+            new_port = user_input();
+        }
+
+        for line in config {
+            if line.starts_with("  host:") {
+                let host_string = format!("  host: 0.0.0.0:{}", new_port);
+                let final_string = host_string;
+
+                new_config.push(final_string);
+            } else {
+                new_config.push(line.to_string());
+            }
+        }
+
+        let file = File::create("./config.yml").expect("Failed to create config.yml");
+        let mut file = BufWriter::new(file);
+
+        for mut line in new_config {
+            line += "\n";
+            file.write_all(line.as_bytes()).expect("Failed to write to config.yml");
+        }
+
+        return
+    } else if server.get_name() == "Velocity" {
+        let toml = fs::read_to_string("./velocity.toml").expect("velocity.toml not found. Make sure you have run the server at least once!");
+        let toml = toml.split('\n').collect::<Vec<&str>>();
+
+        let mut new_toml: Vec<String> = Vec::new();
+
+        print!("Enter the new port you want to use: ");
+
+        let mut new_port = user_input();
+
+        while new_port.parse::<i32>().is_err() || new_port.parse::<i32>().unwrap() < 1 || new_port.parse::<i32>().unwrap() > 65535 {
+            print!("Please enter a valid port: ");
+            new_port = user_input();
+        }
+
+        for line in toml {
+            if line.starts_with("bind") {
+                let bind_string =  format!("bind = \"0.0.0.0:{}\"", new_port);
+                let final_string = bind_string;
+
+                new_toml.push(final_string);
+            } else {
+                new_toml.push(line.to_string());
+            }
+        }
+
+        let file = File::create("./velocity.toml").expect("Failed to create velocity.toml");
+        let mut file = BufWriter::new(file);
+
+        for mut line in new_toml {
+            line += "\n";
+            file.write_all(line.as_bytes()).expect("Failed to write to velocity.toml");
+        }
+
+        return
+    }
+
     let file = File::open("./server.properties").expect("Failed to open server.properties");
     let mut file = BufReader::new(file);
 

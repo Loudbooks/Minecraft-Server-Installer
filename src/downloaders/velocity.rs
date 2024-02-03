@@ -3,10 +3,10 @@ use std::error::Error;
 use std::net::SocketAddrV4;
 use async_trait::async_trait;
 use reqwest::Client;
-use crate::downloader::{basic_proxy_address_from_string, basic_server_address_from_string, download_file, Installer};
+use crate::downloader::{basic_proxy_address_from_string, download_file, Installer};
 use crate::downloaderror::DownloadError;
 use crate::servertype::ServerType;
-use crate::servertype::ServerType::{Proxy, Server};
+use crate::servertype::ServerType::Proxy;
 
 pub(crate) struct Velocity {}
 
@@ -38,9 +38,7 @@ impl Installer for Velocity {
 
     async fn download(&self, client: Client, _minecraft_version: Option<String>) -> Result<String, DownloadError> {
         let velocity_version = get_latest_velocity_version().await.expect("Failed to get latest velocity version");
-        println!("{}", velocity_version);
         let latest_build = get_latest_build(&velocity_version).await.expect("Failed to get latest velocity build");
-        println!("{}", latest_build);
 
         println!(
             "Using Velocity version {} with build {}.",

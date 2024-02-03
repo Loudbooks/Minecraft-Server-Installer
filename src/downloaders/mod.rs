@@ -7,3 +7,4 @@ pub(crate) mod neoforge;
 pub(crate) mod bungeecord;
 pub(crate) mod velocity;
 pub(crate) mod waterfall;
+pub(crate) mod geyser;
