@@ -20,3 +20,8 @@ public-ip = "0.2"
 semver = "1.0.21"
 xml2json-rs = "1.0.1"
 async-trait = "0.1.77"
+tempfile = "3"
+
+[lib]
+name = "minecraft_server_installer"
+path = "src/main.rs"
