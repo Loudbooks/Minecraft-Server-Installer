@@ -27,6 +27,16 @@ impl Installer for Fabric {
         false
     }
 
+    async fn get_versions(&self, client: Client) -> Vec<String> {
+        let json: serde_json::Value = client.get("https://meta.fabricmc.net/v2/versions/game").send().await.expect("Failed to get latest version for Fabric").json().await.expect("Failed to get latest version for Fabric");
+
+        let versions: Vec<String> = json.as_array().map(|versions| {
+            versions.iter().map(|version| version["version"].as_str().unwrap().to_string()).collect()
+        }).unwrap_or_default();
+
+        versions
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_server_address_from_string(string).await
     }

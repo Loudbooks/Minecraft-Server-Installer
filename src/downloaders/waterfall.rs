@@ -28,6 +28,20 @@ impl Installer for Waterfall {
         false
     }
 
+    async fn get_versions(&self, client: Client) -> Vec<String> {
+        let json: serde_json::Value = client.get("https://papermc.io/api/v2/projects/waterfall").send().await.expect("Failed to get latest version for Waterfall").json().await.expect("Failed to get latest version for Waterfall");
+
+        let versions = json["versions"].as_array().unwrap();
+        let mut version_strings = Vec::new();
+
+        for version in versions {
+            let version_string = version.as_str().unwrap().to_string();
+            version_strings.push(version_string);
+        }
+
+        version_strings
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_server_address_from_string(string).await
     }

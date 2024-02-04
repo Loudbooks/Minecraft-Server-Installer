@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::Read;
 use async_trait::async_trait;
+use reqwest::Client;
 use serde_json::Value;
 use tokio::fs;
 use xml2json_rs::JsonBuilder;
@@ -28,11 +29,26 @@ impl Installer for NeoForge {
         true
     }
 
+    async fn get_versions(&self, _client: Client) -> Vec<String> {
+        let mut versions: Vec<String> = vec![];
+
+        for version in get_version_array().await {
+            let array = version.as_str().unwrap().split('.').collect::<Vec<&str>>();
+            let full_string = format!("1.{}", array[0].to_string() + "." + array[1]);
+
+            if !versions.contains(&full_string) {
+                versions.push(full_string);
+            }
+        }
+
+        versions
+    }
+
     async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {
         crate::downloader::basic_server_address_from_string(string).await
     }
 
-    async fn download(&self, client: reqwest::Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
+    async fn download(&self, client: Client, minecraft_version: Option<String>) -> Result<String, crate::downloaderror::DownloadError> {
         let neo_version = get_neoforge_version(minecraft_version).await.expect("Failed to get latest NeoForge version");
 
         println!("Using NeoForge version {}.", neo_version);

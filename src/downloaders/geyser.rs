@@ -1,5 +1,6 @@
 
 use async_trait::async_trait;
+use reqwest::Client;
 use crate::downloader::{basic_server_address_from_string, download_file, Installer};
 use crate::servertype::ServerType;
 use crate::servertype::ServerType::Server;
@@ -26,6 +27,13 @@ impl Installer for Geyser {
 
     fn version_required(&self) -> bool {
         false
+    }
+
+    async fn get_versions(&self, client: Client) -> Vec<String> {
+        let json: serde_json::Value = client.get("https://download.geysermc.org/v2/projects/geyser/versions/latest").send().await.expect("Failed to get latest version for Geyser").json().await.expect("Failed to get latest version for Geyser");
+        let version = json["version"].as_str().unwrap().to_string();
+
+        vec![version]
     }
 
     async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {

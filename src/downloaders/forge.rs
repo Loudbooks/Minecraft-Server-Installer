@@ -32,6 +32,21 @@ impl Installer for Forge {
         false
     }
 
+    async fn get_versions(&self, client: Client) -> Vec<String> {
+        let url = "https://files.minecraftforge.net/maven/net/minecraftforge/forge/promotions_slim.json";
+        let response = client.get(url).send().await.expect("Failed to get latest version for Forge");
+        let json: Value = response.json().await.expect("Failed to get latest version for Forge");
+
+        let game_versions = json["promos"].as_object().expect("Invalid JSON format");
+
+        let versions: Vec<String> = game_versions
+            .iter()
+            .map(|(version, _)| version.to_string().replace("-latest", "").replace("-recommended", ""))
+            .collect();
+
+        versions
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_server_address_from_string(string).await
     }

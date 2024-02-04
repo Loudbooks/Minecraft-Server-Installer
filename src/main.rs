@@ -151,19 +151,40 @@ async fn main() {
 
         let client = Client::new();
 
-        println!("What kind of server do you want to run?");
-        println!("Servers:" );
+        let mut out_string: Vec<String> = vec![];
+
+        println!("Gathering server information...");
+
+        out_string.push("Servers:".to_string());
         let server_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Server).collect::<Vec<&Box<dyn Installer>>>();
         for (mut index, downloader) in server_downloaders.iter().enumerate() {
+            let mut versions = downloader.get_versions(client.clone()).await;
+
+            if versions.len() > 20 {
+                versions = vec![format!("Too many versions, type {}V to list.", index + 1)];
+            }
+
             index += 1;
-            println!("  {}. {} - {}", index, downloader.get_name(), downloader.get_description());
+            out_string.push(format!("  {}. {} - {} - [{}]", index, downloader.get_name(), downloader.get_description(), versions.join(", ")));
         }
 
-        println!("Proxies:");
+        out_string.push("Proxies:".to_string());
         let proxy_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Proxy).collect::<Vec<&Box<dyn Installer>>>();
         for (mut index, downloader) in proxy_downloaders.iter().enumerate() {
+            let mut versions = downloader.get_versions(client.clone()).await;
+
+            if versions.len() > 20 {
+                versions = vec![format!("Too many versions, type {}V to list.", index + 1)];
+            }
+
             index += 1;
-            println!("  {}. {} - {}", index + server_downloaders.len(), downloader.get_name(), downloader.get_description());
+            out_string.push(format!("  {}. {} - {} - [{}]", index + server_downloaders.len(), downloader.get_name(), downloader.get_description(), versions.join(", ")));
+        }
+
+        println!("What kind of server do you want to run?");
+
+        for line in out_string {
+            println!("{}", line);
         }
 
         println!();
@@ -176,7 +197,45 @@ async fn main() {
             Ok(value) => !(1..=total_types).contains(&value),
             Err(_) => true,
         } {
-            print!("Please enter a valid number: ");
+            if server_type.ends_with('V') || server_type.ends_with('v') {
+                let index = server_type.replace(['V', 'v'], "").parse::<usize>().expect("Failed to parse index");
+                let downloader = downloaders.get(index - 1).expect("Failed to get downloader");
+
+                let versions = downloader.get_versions(client.clone()).await;
+                let mut out_string: Vec<String> = vec![];
+
+                for version in versions {
+                    let start = if version.contains('.') {
+                        let version_string = version.split('.').collect::<Vec<&str>>().first().unwrap().to_string() + "." + version.split('.').collect::<Vec<&str>>().get(1).unwrap().split('-').collect::<Vec<&str>>().first().unwrap();
+                        version_string
+                    } else {
+                        version.split('w').collect::<Vec<&str>>().first().unwrap().to_string()
+                    };
+
+                    if out_string.iter().any(|s| s.starts_with(start.as_str())) {
+                        out_string = out_string.iter().map(|s| {
+                            if s.starts_with(start.as_str()) {
+                                format!("{}, {}", s, version)
+                            } else {
+                                s.to_string()
+                            }
+                        }).collect::<Vec<String>>();
+                    } else {
+                        out_string.push(version);
+                    }
+                }
+
+                println!("Versions for {}:", downloader.get_name());
+                for version in out_string {
+                    println!("{}", version);
+                    println!();
+                }
+
+                print!("Enter the number of the server you want to run: (1-{}): ", downloaders.len());
+            } else {
+                print!("Please enter a valid number: ");
+            }
+
             server_type = user_input();
         }
 

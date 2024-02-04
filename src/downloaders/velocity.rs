@@ -32,6 +32,14 @@ impl Installer for Velocity {
         false
     }
 
+    async fn get_versions(&self, client: Client) -> Vec<String> {
+        let json: serde_json::Value = client.get("https://papermc.io/api/v2/projects/velocity").send().await.expect("Failed to get latest version for Velocity").json().await.expect("Failed to get latest version for Velocity");
+
+        let versions = json["versions"].as_array().unwrap().last();
+
+        vec![versions.unwrap().as_str().unwrap().to_string()]
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_proxy_address_from_string(string).await
     }

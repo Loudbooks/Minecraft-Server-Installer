@@ -26,6 +26,10 @@ impl Installer for Vanilla {
         false
     }
 
+    async fn get_versions(&self, _client: Client) -> Vec<String> {
+        vec!["All Versions".to_string()] // Literally all versions. This is a Vanilla server, after all.
+    }
+
     async fn startup_message(&self, string: String) -> Option<SocketAddrV4> {
         basic_server_address_from_string(string).await
     }

@@ -27,6 +27,12 @@ impl Installer for BungeeCord {
         false
     }
 
+    async fn get_versions(&self, client: reqwest::Client) -> Vec<String> {
+        let version = client.get("https://ci.md-5.net/job/BungeeCord/lastSuccessfulBuild/buildNumber").send().await.expect("Failed to get latest version for ").text();
+
+        vec![version.await.unwrap_or("".to_string())]
+    }
+
     async fn startup_message(&self, string: String) -> Option<std::net::SocketAddrV4> {
         basic_proxy_address_from_string(string).await
     }
