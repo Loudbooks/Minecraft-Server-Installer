@@ -25,6 +25,7 @@ use crate::downloaders::geyser::Geyser;
 use crate::downloaders::java::download_java;
 use crate::downloaders::neoforge::NeoForge;
 use crate::downloaders::paper::Paper;
+use crate::downloaders::purpur::Purpur;
 use crate::downloaders::vanilla::Vanilla;
 use crate::downloaders::velocity::Velocity;
 use crate::downloaders::waterfall::Waterfall;
@@ -38,6 +39,7 @@ async fn main() {
     let downloaders: Vec<Box<dyn Installer>> = vec![
         Box::new(Vanilla {}),
         Box::new(Paper {}),
+        Box::new(Purpur {}),
         Box::new(Fabric {}),
         Box::new(Forge {}),
         Box::new(NeoForge {}),
