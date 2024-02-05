@@ -12,6 +12,11 @@ A program to download any version of your favorite Minecraft server distribution
 - Fabric
 - Forge
 - NeoForge
+- Bungeecord
+- Velocity
+- Waterfall
+- GeyserMC
+- Purpur
 
 
 # Download
