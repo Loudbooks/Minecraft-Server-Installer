@@ -155,6 +155,8 @@ async fn main() {
 
         println!("Gathering server information...");
 
+        out_string.push("".to_string());
+
         out_string.push("Servers:".to_string());
         let server_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Server).collect::<Vec<&Box<dyn Installer>>>();
         for (mut index, downloader) in server_downloaders.iter().enumerate() {
@@ -164,9 +166,13 @@ async fn main() {
                 versions = vec![format!("Too many versions, type {}V to list.", index + 1)];
             }
 
+            versions.reverse();
+
             index += 1;
             out_string.push(format!("  {}. {} - {} - [{}]", index, downloader.get_name(), downloader.get_description(), versions.join(", ")));
         }
+
+        out_string.push("".to_string());
 
         out_string.push("Proxies:".to_string());
         let proxy_downloaders = downloaders.iter().filter(|downloader| downloader.get_type() == Proxy).collect::<Vec<&Box<dyn Installer>>>();
@@ -176,6 +182,8 @@ async fn main() {
             if versions.len() > 20 {
                 versions = vec![format!("Too many versions, type {}V to list.", index + 1)];
             }
+
+            versions.reverse();
 
             index += 1;
             out_string.push(format!("  {}. {} - {} - [{}]", index + server_downloaders.len(), downloader.get_name(), downloader.get_description(), versions.join(", ")));
