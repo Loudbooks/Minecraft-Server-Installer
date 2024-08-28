@@ -13,7 +13,7 @@ indicatif = "0.17.7"
 futures-util = "0.3.14"
 zip = "2.2.0"
 zip-extensions = "0.8.1"
-openssl = { version = "0.10", features = ["vendored"] }
+openssl = { version = "0.10.66", features = ["vendored"] }
 toml = "0.8.8"
 serde = { version = "1.0.196", features = ["derive"] }
 public-ip = "0.2"
