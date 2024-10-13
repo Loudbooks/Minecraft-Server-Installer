@@ -184,7 +184,7 @@ impl ConfigFile {
                 linux_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_linux_hotspot_8u402b06.tar.gz".to_string(),
                 linux_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_x64_linux_hotspot_2021-09-14-01-32.tar.gz".to_string(),
                 linux_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_linux_hotspot_17.0.10_7.tar.gz".to_string(),
-                linux_21: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jdk_x64_linux_hotspot_21.0.4_7.tar.gz".to_string(),
+                linux_21: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jre_x64_linux_hotspot_21.0.4_7.tar.gz".to_string(),
                 linux_arm_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_aarch64_linux_hotspot_8u402b06.tar.gz".to_string(),
                 linux_arm_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jdk_aarch64_linux_hotspot_2021-09-14-01-32.tar.gz".to_string(),
                 linux_arm_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_arm_linux_hotspot_17.0.10_7.tar.gz".to_string(),
@@ -192,8 +192,7 @@ impl ConfigFile {
                 windows_8: "https://github.com/adoptium/temurin8-binaries/releases/download/jdk8u402-b06/OpenJDK8U-jre_x64_windows_hotspot_8u402b06.zip".to_string(),
                 windows_16: "https://github.com/adoptium/temurin16-binaries/releases/download/jdk16u-2021-09-14-01-32-beta/OpenJDK16U-jre_x64_windows_hotspot_2021-09-14-01-32.zip".to_string(),
                 windows_17: "https://github.com/adoptium/temurin17-binaries/releases/download/jdk-17.0.10%2B7/OpenJDK17U-jre_x64_windows_hotspot_17.0.10_7.zip".to_string(),
-
-                windows_21: "".to_string(),
+                windows_21: "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.4%2B7/OpenJDK21U-jre_x64_windows_hotspot_21.0.4_7.zip".to_string(),
             },
             java_version_thresholds: JavaVersionThresholds {
                 java_16: "21w19a".to_string(),
