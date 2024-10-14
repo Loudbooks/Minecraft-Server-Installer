@@ -28,23 +28,23 @@ A program to download any version of your favorite Minecraft server distribution
 
 ## MacOS
 #### Apple Silicon
-- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/download/latest/server-installer-macos-aarch64`
+- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest/download/server-installer-macos-aarch64`
 - Run `chmod +x ./server-installer-macos-aarch64`
 - Run `./server-installer-macos-aarch64`
 
 #### Intel
-- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/download/latest/server-installer-macos-x86_64`
+- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest/download/server-installer-macos-x86_64`
 - Run `chmod +x ./server-installer-macos-x86_64`
 - Run `./server-installer-macos-x86_64`
 
 ## Linux
 #### ARM
-- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/download/latest/server-installer-linux-aarch64`
+- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest/download/server-installer-linux-aarch64`
 - Run `chmod +x ./server-installer-linux-aarch64`
 - Run `./server-installer-linux-aarch64`
 
 ### Intel
-- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/download/latest/server-installer-linux-x86_64`
+- Run `curl -L -O https://github.com/Loudbooks/Minecraft-Server-Installer/releases/latest/download/server-installer-linux-x86_64`
 - Run `chmod +x ./server-installer-linux-x86_64`
 - Run `./server-installer-linux-x86_64`
 
